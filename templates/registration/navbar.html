@@ -1,0 +1,37 @@
+{% load static %}
+<div class="navbar">
+    <ul class="nav nav-pills">
+        <li class="nav-item">
+          <img src="{% static "images/logo.jpg" %}" class="first" alt="...">   
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" aria-current="page" href=" {% url 'home'%} ">Home</a>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Forms
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+            <li><a class="dropdown-item" href="{% url 'voter_register'%}">Voter Form</a></li>
+            <li><a class="dropdown-item" href="{% url 'candidate'%}">Candidate Form</a></li>
+          </ul>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link " href="{% url 'language'%}">Language</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link " href="{% url 'select_post'%}">Voting</a>
+        </li>
+      </ul>
+
+      <!--search button-->
+      <div class="nav-item">
+        <form action="#">
+            <input type="text" placeholder="Search" name="search" >
+            <button>
+                <i class="fa-solid fa-magnifying-glass" style="font-size: 18px;"></i> 
+            </button>
+        </form>
+    </div>
+
+</div>

@@ -1,0 +1,58 @@
+<<<<<<< HEAD
+<<<<<<< HEAD
+{% extends 'registration/home.html'%}
+{% load static%}
+
+{% include "registration/navbar.html" %}
+
+{% block content %}
+<center>
+    <h1>Add Fingerprint</h1>
+</center>
+
+<div class="p-4">
+    <h4>
+        {{voter.first_name}} {{voter.last_name}}
+        </h4>
+        
+        <h6>Other details</h6>
+        {{voter.nin_number}}
+        {{voter.phone_contact}}
+        {{voter.Polling_station}}
+        {{voter.date_of_birth}}
+        
+        <div>
+            <button type="submit" class="btn btn-warning" id="registerButton">
+                <a class="text-dark" href="{% url 'scan_save_fingerprint' id=voter.id %}" style="text-decoration:none">Add Fingerprint</a> 
+                </button>
+        </div>
+        {% comment %} <h6>Special Fxns</h6> {% endcomment %}
+        
+</div>
+
+
+{% endblock %}
+
+{% include "registration/footer.html" %} 
+=======
+=======
+>>>>>>> 3409599e8033f19433aae308b612cf1988cd5850
+<h1>Add Fingerprint</h1>
+
+<h4>
+{{voter.first_name}} {{voter.last_name}}
+</h4>
+
+<h6>Other details</h6>
+{{voter.nin_number}}
+{{voter.phone_contact}}
+{{voter.Polling_station}}
+{{voter.date_of_birth}}
+
+<h6>Special Fxns</h6>
+<<<<<<< HEAD
+<a href="{% url 'scan_save_fingerprint' id=voter.id %}">Add Fingerprint</a>
+>>>>>>> 3409599e8033f19433aae308b612cf1988cd5850
+=======
+<a href="{% url 'scan_save_fingerprint' id=voter.id %}">Add Fingerprint</a>
+>>>>>>> 3409599e8033f19433aae308b612cf1988cd5850

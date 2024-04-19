@@ -1,0 +1,173 @@
+<<<<<<< HEAD
+<<<<<<< HEAD
+{% extends 'registration/home.html'%}
+=======
+{%extends 'registration/home.html'%}
+>>>>>>> 3409599e8033f19433aae308b612cf1988cd5850
+=======
+{%extends 'registration/home.html'%}
+>>>>>>> 3409599e8033f19433aae308b612cf1988cd5850
+{% load static%}
+
+{% include "registration/navbar.html" %}
+
+{% block content %}
+
+
+  <center>
+    <h1>Voter Registration Form</h1>
+    <br></br>
+    {% if submitted%}
+
+<<<<<<< HEAD
+<<<<<<< HEAD
+    <h4>Go Ahead and View voter list.</h4>
+    <br>
+
+    <div class="col-12">
+      <button type="submit" class="btn btn-warning" id="registerButton">
+        <a class = "text-dark" href="{% url 'allvoters' %}" style="text-decoration:none">View Voters</a>
+      </button>
+=======
+=======
+>>>>>>> 3409599e8033f19433aae308b612cf1988cd5850
+    <h4>Go Ahead to Scan fingerprint.</h4>
+    <br>
+
+    <div class="col-12">
+      <button type="submit" class="btn btn-warning" id="registerButton">Register</button>
+<<<<<<< HEAD
+>>>>>>> 3409599e8033f19433aae308b612cf1988cd5850
+=======
+>>>>>>> 3409599e8033f19433aae308b612cf1988cd5850
+  </div>
+
+    {% else%}
+
+      <form class=" container" action="{% url 'voter_register' %}" method="POST">
+
+        {% csrf_token %}
+        <div class="row">
+          <div class="col-md-4">
+            <label >Are you a citizen of Uganda?</label>
+          </div>
+          <div class="form-check col-md-4">
+            <input class="form-check-input" type="radio" name="uganda_citizen" value="yes" id="flexCheckDefaultYes">
+            <label class="form-check-label" for="flexCheckDefaultYes">Yes</label>
+          </div>
+          <div class="form-check col-md-4">
+            <input class="form-check-input" type="radio" name="uganda_citizen" value="no" id="flexCheckDefaultNo">
+            <label class="form-check-label" for="flexCheckDefaultNo">No</label>
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="col-md-4">
+            <input type="text" name="first_name" id="first_name" class="form-control" placeholder="First Name">
+          </div>
+    
+          <div class="col-md-4">
+            <input type="text" name="middle_name" id="middle_name" class="form-control" placeholder="Middle Name">
+          </div>
+    
+          <div class="col-md-4">
+            <input type="text" name="last_name" id="last_name" class="form-control" placeholder="Last Name">
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="col-md-6">
+            <select name="gender" id="gender" class="form-control">
+              <option value="" selected disabled>Select Gender</option>
+              {% for gender_choice in GENDERS %}
+                  <option value="{{ gender_choice.0 }}">{{ gender_choice.1 }}</option>
+              {% endfor %}
+          </select>
+          </div>
+
+          <div class="col-md-6">
+              <input type="text" name="date_of_birth" id="date_of_birth" class="form-control"  placeholder="Date Of Birth">
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="col-md-6">
+            <input type="text" name="nin_number" id="nin_number" class="form-control" placeholder="NIN number">
+          </div>
+
+          <div class="col-md-6">
+            <input type="text" name="phone_contact" id="phone_contact" class="form-control" placeholder="Telephone Contact">
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6">
+            <select name="voter_type" id="voter_type" class="form-control">
+              <option value="" selected disabled>Select Voter Type</option>
+              {% for votertype_choice in VOTER_TYPES %}
+                  <option value="{{ votertype_choice.0 }}">{{ votertype_choice.1 }}</option>
+              {% endfor %}
+          </select>
+          </div>
+
+          <div class="col-md-6">
+            <select name="Polling_station" id="Polling_station" class="form-control" placeholder="Polling Station">
+              <option value="" selected disabled>Select Polling Station</option>
+              {% for station in polling_stations %}
+                  <option value="{{ station.id }}">{{ station.name }}</option>
+              {% endfor %}
+          </select>
+          </div>
+        </div>
+        
+      
+        <div class="col-12">
+            <button type="submit" class="btn btn-warning" id="continueButton">Continue</button>
+        </div>
+
+      </form>
+
+      {% if nin_error %}
+        <div style="color: red; font-weight: bold;">{{ nin_error_message }}</div>
+      {% endif %}
+        
+    {% endif %}
+  </center>
+
+<<<<<<< HEAD
+<<<<<<< HEAD
+
+=======
+=======
+>>>>>>> 3409599e8033f19433aae308b612cf1988cd5850
+  {% comment %} <script>
+    const socket = new WebSocket('ws://127.0.0.1:8000/ws/my_websocket');
+
+    socket.addEventListener('open', (event) => {
+        console.log('WebSocket connected');
+    });
+
+    socket.addEventListener('message', (event) => {
+        console.log('Message from Django:', event.data);
+        // Handle the message from Django (if needed)
+    });
+
+    document.getElementById('registerButton').addEventListener('click', () => {
+        // Simulate a fingerprint scan and send data to Django when the button is clicked
+        const fingerprintData = {
+            id: 123,
+            template: 'your_fingerprint_template_data'
+            // Add other fields as needed
+        };
+
+        // Send the fingerprint data to Django server
+        socket.send(JSON.stringify(fingerprintData));
+    });
+    </script> {% endcomment %}
+<<<<<<< HEAD
+>>>>>>> 3409599e8033f19433aae308b612cf1988cd5850
+=======
+>>>>>>> 3409599e8033f19433aae308b612cf1988cd5850
+{% endblock %}
+
+{% include "registration/footer.html" %}

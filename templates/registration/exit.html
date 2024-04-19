@@ -1,0 +1,35 @@
+{%extends 'registration/home.html'%}
+{% load static%}
+
+{% include "registration/navbar.html" %}
+
+{%block content%}
+
+<div class=" container">
+
+    <div class="row">
+
+        <div class="col-sm-6">
+            <div class="card" style="width: 20rem;">
+                <img src="{% static "images/voter1.jpg" %}" class="card-img-top" alt="...">
+                <div class="card-body">
+                  <p class="card-text fw-bold">Voting is Everyone's right.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6">
+            <div class="card" style="width: 20rem;">
+                <img src="{% static "images/voter2.png" %}" class="card-img-top" alt="...">
+                <div class="card-body">
+                  <p class="card-text fw-bold">Thank You For Registering To Vote.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    
+</div>
+
+{%endblock%}
+
+{% include "registration/footer.html" %}

@@ -1,0 +1,47 @@
+<<<<<<< HEAD
+<<<<<<< HEAD
+{% extends 'registration/home.html'%}
+{% load static%}
+
+{% include "registration/navbar.html" %}
+
+{% block content %}
+<center>
+    <h1>All Voters</h1>
+</center>
+
+    {% for voter in voters %}
+    <div class="loopy">
+        <ul>
+            <li>
+                <a class="text-dark" href="{% url 'voter_details' voter.id %}" style="text-decoration:none" >{{voter.first_name}} {{voter.last_name}}</a>
+            </li>
+        </ul>
+    </div>
+    
+
+    {% endfor %}
+
+
+{% endblock %}
+
+{% include "registration/footer.html" %} 
+=======
+=======
+>>>>>>> 3409599e8033f19433aae308b612cf1988cd5850
+<h1>All Voters</h1>
+
+{% for voter in voters %}
+
+<ul>
+    <li>
+        <a href="{% url 'voter_details' voter.id %}">{{voter.first_name}} {{voter.last_name}}</a>
+    </li>
+</ul>
+
+<<<<<<< HEAD
+{% endfor %}
+>>>>>>> 3409599e8033f19433aae308b612cf1988cd5850
+=======
+{% endfor %}
+>>>>>>> 3409599e8033f19433aae308b612cf1988cd5850

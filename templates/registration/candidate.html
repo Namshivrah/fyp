@@ -1,0 +1,95 @@
+{%extends 'registration/home.html'%}
+{% load static%}
+
+{% include "registration/navbar.html" %}
+
+{% block content %}
+
+  <center>
+    <h1>Candidate Registration Form</h1>
+    <br></br>
+
+    {% if submitted%}
+    Thank you for registering!!!
+
+    {% else%}
+
+    <form class=" container" action="{% url 'candidate' %}" method="POST" enctype="multipart/form-data">
+       <!--{{form.as_p}}-->
+
+       {% csrf_token %}
+          <div class="row">
+            <div class="col-md-4">
+              <label >Are you a citizen of Uganda?</label>
+            </div>
+            <div class="form-check col-md-4">
+              <input class="form-check-input" type="radio" name="uganda_citizen" value="yes" id="flexCheckDefaultYes">
+              <label class="form-check-label" for="flexCheckDefaultYes">Yes</label>
+            </div>
+            <div class="form-check col-md-4">
+              <input class="form-check-input" type="radio" name="uganda_citizen" value="no" id="flexCheckDefaultNo">
+              <label class="form-check-label" for="flexCheckDefaultNo">No</label>
+            </div>
+          </div>
+
+
+          <div class = 'row'>
+            <div class="col-md-6">
+                {{form.profile_pic}}
+            </div>
+         
+            <div class="col-md-6">
+              <select name="political_party" id="political_party" class="form-control">
+                <option value="" selected disabled>Political Party</option>
+                  {% for politicalparty_choice in POLITICAL_PARTY %}
+                      <option value="{{ politicalparty_choice.0 }}">{{ politicalparty_choice.1 }}</option>
+                  {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-4">
+              <input type="text" name="first_name" id="first_name" class="form-control" placeholder="First Name">
+            </div>
+      
+            <div class="col-md-4">
+              <input type="text" name="middle_name" id="middle_name" class="form-control" placeholder="Middle Name">
+            </div>
+      
+            <div class="col-md-4">
+              <input type="text" name="last_name" id="last_name" class="form-control" placeholder="Last Name">
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <select name="gender" id="gender" class="form-control">
+                <option value="" selected disabled>Select Gender</option>
+                {% for gender_choice in GENDERS %}
+                    <option value="{{ gender_choice.0 }}">{{ gender_choice.1 }}</option>
+                {% endfor %}
+              </select>
+            </div>
+  
+            <div class="col-md-6">
+              <select name="post_aspired_for" id="post_aspired_for" class="form-control">
+                <option value="" selected disabled>Aspiring Post</option>
+                {% for post_choice in ASPIRING_POSTS %}
+                    <option value="{{ post_choice.0 }}">{{ post_choice.1 }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+ 
+          <div class="col-12">
+            <button type="submit" class="btn btn-warning">Register</button>
+          </div>
+        
+    </form>
+    {% endif %}
+  </center>
+
+{% endblock %}
+
+{% include "registration/footer.html" %} 

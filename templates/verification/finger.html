@@ -1,0 +1,29 @@
+{%extends 'verification/lang.html'%}
+{% load static%}
+
+{% include "verification/navbar.html" %}
+
+{% block content%}
+
+    <div class="container">
+        <h3 class="text-center">Scan Fingerprint for Verification</h3>
+        <form>
+            <div class="card" style="width: 18rem;">
+                <img src="..." class="card-img-top" alt="...">
+              </div>
+
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault">
+                <label class="form-check-label" for="flexCheckChecked">
+                  Are you sure?
+                </label>
+              </div>
+        </form>
+        
+        
+    </div>
+
+{% endblock%} 
+
+{% include "verification/footer.html" %}
+
