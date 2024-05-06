@@ -4,15 +4,7 @@
 <head>
 
   <title>{% block title %}Luganda Vote{% endblock %}</title>
-<<<<<<< HEAD
-<<<<<<< HEAD
 {% load django_bootstrap5 %}
-=======
-{% load bootstrap5 %}
->>>>>>> 3409599e8033f19433aae308b612cf1988cd5850
-=======
-{% load bootstrap5 %}
->>>>>>> 3409599e8033f19433aae308b612cf1988cd5850
 {% bootstrap_css %}
 {% bootstrap_javascript %}
 
@@ -60,17 +52,13 @@
 {% block content %}
 <center>
 
-     {% comment %} <h1> Ab'esimbyewo ku kifo ky'obwa {{ post_aspired_for }}</h1>
-    <ul>
-          {% for candidate in candidates %}
-          <li>{{ candidate.full_name }}</li>
-          {% empty %}
-          <li>No candidates found.</li>
-          {% endfor %}
-    </ul>    {% endcomment %}
+     <h1> Ab'esimbyewo ku kifo ky'obwa {{ post_aspired_for }}</h1>
     
+    <div id="recordingStatus">
+    </div>    
+
     <!--<p>Debug: {{ audio_url }}</p>   Add this line for debugging -->
-      <audio controls autoplay id="myAudio">
+      <audio controls autoplay id="myAudio" method ="POST">
         <source src="{{ MEDIA_URL }}output_audio.webm" type="audio/webm">
         Your browser does not support the audio element.
       </audio>
@@ -83,12 +71,15 @@
 
     <script>
         var audio = document.getElementById('myAudio');
-        //var speedControl = document.getElementById('speed');
+          audio.playbackRate = 0.8;
 
-            audio.playbackRate = 0.8;
-            {% comment %} audio.play().catch(function(error) {
-              console.log('Autoplay failed:', error);
-        }); {% endcomment %}
+          console.log("{{redirect_url}}");
+
+    setTimeout(function(){
+      console.log("Redirect URL: " + "{{redirect_url}}");
+      window.location.href = "{{redirect_url}}";
+    }, 15000);
+           
     </script>
 
 

@@ -4,15 +4,7 @@
 <head>
 
   <title>{% block title %}Begin{% endblock %}</title>
-<<<<<<< HEAD
-<<<<<<< HEAD
 {% load django_bootstrap5 %}
-=======
-{% load bootstrap5 %}
->>>>>>> 3409599e8033f19433aae308b612cf1988cd5850
-=======
-{% load bootstrap5 %}
->>>>>>> 3409599e8033f19433aae308b612cf1988cd5850
 {% bootstrap_css %}
 {% bootstrap_javascript %}
 
@@ -133,7 +125,7 @@
             let blob = recorder.getBlob();
             const formData = new FormData();
             formData.append('audio_data', blob, 'my_audio.webm');
-            fetch('/language/', {
+            fetch('/language', {
               method: 'POST',
               body: formData,
               headers: {

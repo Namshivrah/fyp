@@ -19,13 +19,17 @@ urlpatterns = [
     path('receive-fingerprint', views.receive_fingerprint_image, name='receive_fingerprint_image'),
     path('fingerpattern', views.store_fingerprint, name='fingerpattern'),
     path('scanner', views.scanner, name='scanner'),
-    path('language/', views.language, name='language'),
+    path('language', views.language, name='language'),
     path('sunbird/<str:id>/', views.sunbird, name='sunbird'),
     path('english_vote/<str:post_aspired_for>/', views.english_vote, name='english_vote'),
     path('luganda_vote/<str:post_aspired_for>/', views.luganda_vote, name='luganda_vote'),
     path('candidate_engvote/<str:post_aspired_for>/', views.candidate_engvote, name='candidate_engvote'),
-    path('select_post/', views.select_post, name='select_post'),
-    path('posteng_choice/', views.posteng_choice, name='posteng_choice'),
+    path('candidate_lugvote/<str:post_aspired_for>/', views.candidate_lugvote, name='candidate_lugvote'),
+    path('select_post', views.select_post, name='select_post'),
+    path('select_post_lug', views.select_post_lug, name='select_post_lug'),
+    path('posteng_choice', views.posteng_choice, name='posteng_choice'),
+    path('postlug_choice', views.postlug_choice, name='postlug_choice'),
+
 ]
 
 if settings.DEBUG:

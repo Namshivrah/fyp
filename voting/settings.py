@@ -40,16 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_middleware_global_request',
     'freedom',
-<<<<<<< HEAD
-<<<<<<< HEAD
     'django_bootstrap5',
-    # 'bootstrap4',
-=======
-    'bootstrap5',
->>>>>>> 3409599e8033f19433aae308b612cf1988cd5850
-=======
-    'bootstrap5',
->>>>>>> 3409599e8033f19433aae308b612cf1988cd5850
     'channels',
     
     
