@@ -1,13 +1,8 @@
 from django.db import models
 import uuid
 from django.utils import timezone
-<<<<<<< HEAD
-<<<<<<< HEAD
 from django.contrib.auth.models import AbstractUser
-=======
->>>>>>> 3409599e8033f19433aae308b612cf1988cd5850
-=======
->>>>>>> 3409599e8033f19433aae308b612cf1988cd5850
+
 
 
 # Model for storing Addresses

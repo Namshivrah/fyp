@@ -1,3 +1,5 @@
+from sqlite3 import Cursor
+import psycopg2
 import requests
 import base64
 from django.conf import settings
@@ -29,6 +31,8 @@ from django.shortcuts import render, redirect
 from pyfingerprint.pyfingerprint import PyFingerprint, FINGERPRINT_CHARBUFFER1, FINGERPRINT_CHARBUFFER2
 import time
 import string
+import time
+from time import sleep
 # import Levenshtein
 # from IPython.display import Audio
 
@@ -94,6 +98,138 @@ def scan_save_fingerprint(request, id):
         print('Operation failed!')
         print('Exception message: ' + str(e))
         return redirect(reverse('voter_details', args=[id]))
+
+# function for verifying the fingerprint
+DB_HOST = "localhost"
+DB_NAME = "akarah"
+DB_USER = "admin"
+DB_PORT = "5432"
+DB_PASSWORD = "betah1234"
+
+def connect_to_database():
+    try:
+        connection = psycopg2.connect(
+            host=DB_HOST,
+            port=DB_PORT,
+            database=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD
+        )
+        print("Connected to the database.")
+        return connection
+    except Exception as e:
+        print(f"Error connecting to the database: {e}")
+        return None
+
+def close_database_connection(connection):
+    if connection:
+        connection.close()
+        print("PostgreSQL connection is closed")
+
+# ---------------- comparison --------------------
+def comparison(charactertics1, charactertics2):
+    matching_count = sum(x==y for x, y in zip(charactertics1, charactertics2))
+
+    if len(charactertics1) > len(charactertics2):
+        total_elements = len(charactertics2)
+    else:
+        total_elements = len(charactertics1)
+
+    percentage_on_matching = (matching_count / total_elements) * 100
+
+    # print(f"Matching Percentage: {percentage_on_matching}")
+
+    return percentage_on_matching
+
+# verification of the fingerprint
+def get_data_from_database():
+    connection = connect_to_database()
+    if connection:
+        try:
+            # with connection.cursor() as cursor:
+                # cursor.execute("SELECT id, fingerprint_xtics1")
+            Cursor.execute(query)
+            voters = Cursor.fetchall()
+            print(voters)
+                # return voters
+
+            # Create an index of the fingerprints
+            # index = create_index([voter[1] for voter in voters])
+            return voters  
+
+        except Exception as e:
+            print(f"Error fetching data from the database: {str(e)}")
+        finally:
+            close_database_connection(connection)
+
+    return None
+
+def main(request):
+    connection = None  # Initialize the connection variable
+
+    try:
+        f = PyFingerprint('/dev/ttyS0', 57600, 0xFFFFFFFF, 0x00000000)
+        if not f.verifyPassword():
+            raise ValueError('The given fingerprint sensor password is wrong!')
+
+        matched_voter = get_data_from_database()  # Establish a database connection within main
+
+        # display.random_message("Press Finger")
+        sleep(3)
+
+        while not f.readImage():
+            pass
+
+        f.convertImage(FINGERPRINT_CHARBUFFER1)
+        scanned_xtics = f.downloadCharacteristics(FINGERPRINT_CHARBUFFER1)
+        # print(scanned_xtics)
+
+        # index = get_data_from_database()
+
+        # data = get_data_from_database()
+
+        # Match the scanned fingerprint with the index
+        # matched_voter = match_fingerprint(scanned_xtics, index)
+
+        if matched_voter:
+            print("Fingerprint matched!")
+            stored_characteristics1 = eval(matched_voter[1])
+
+            if comparison(scanned_xtics, stored_characteristics1) > 85:
+                language_key = request.session.get('language_key', 'default_key')
+
+                # Map the language_key to a view function name
+                language_map = {
+                    '1': 'select_post',  # English language
+                    '2': 'select_post_lug',  # Luganda language
+                    '3': 'select_post_keypad',  # English keypad
+                    '4': 'select_post_lugkeypad',  # Luganda keypad
+                }
+                view_name = language_map.get(language_key, 'default_view')  # Default to a default view if no valid key is found
+
+                # Redirect to the specific page
+                return redirect(reverse(view_name))
+
+        else:
+            print("Fingerprint did not match.")
+            # display.random_message("Not Found")
+
+    except Exception as e:
+        print(f'Exception occurred: {str(e)}')
+
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+    finally:
+        if connection:
+            close_database_connection(connection)
+
+
+    # If everything went well, return a successful response
+    return JsonResponse({'status': 'success'})
+
+
+
 # Create your views here.
 def home(request):
     images = [
@@ -734,8 +870,377 @@ def candidate_lugvote(request, post_aspired_for):
     return render(request, 'voting/candidate_lugvote.html', context)
 
     
-          
+  # -------------------- KEYPAD ACTIVITIES ----------------------------
+
+
+# -------------------- KEYPAD ACTIVITIES ----------------------------
+
+@csrf_exempt
+def language_keypad(request):
     
+    if request.method == 'POST':
+        key_pressed = request.POST.get('key_pressed')
+        # Perform actions based on the key pressed
+        # For example, you can log the key pressed, trigger further instructions, etc.
+        return JsonResponse({'status': 'success'})
+
+    elif request.method == 'GET':
+        # Handle GET requests
+        return render(request, 'verification/keypadlanguage.html')
+    else:
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+
+    return render(request, 'verification/keypadlanguage.html')        
+
+#posts are read out in English using keypad
+def select_post_keypad(request):
+    posts = Candidates.objects.values_list('post_aspired_for', flat=True).distinct()
+    # Creating the text Input
+    the_text= f"Available Posts to Vote For: "
+    for i, post in enumerate(posts, start=1):
+        the_text += f"{i}: {post},"
+
+    # Output format
+    # audio_filename =   # You can choose a desired filename
+    audio_url = os.path.join(settings.MEDIA_ROOT, 'output_audio.webm')
     
+    print(type(audio_url))
+    print(os.path.exists(audio_url))
+    with open(audio_url, 'wb') as f:
+        # Creating Audio Response
+        response = client.audio.speech.create(
+        model="tts-1",
+        voice = "onyx",
+        input = the_text
+        )
+
+        print(response)
+ 
+        content = response.content       
+        f.write(content)
+   
+    url = reverse('posteng_choice_keypad')  # Replace 'english_vote' with the name of your view
+    context = {'url':url, 'posts':list(posts),  'audio_url':audio_url, 'MEDIA_URL': settings.MEDIA_URL}
+    
+    return render(request, 'voting/select_post_keypad.html',context)    
+    
+# Valaibale posts luganda 
+numbers_to_luganda = {
+    1: "emu",
+    2: "bbiri",
+    3: "ssatu",
+}
+def select_post_lugkeypad(request):
+    posts = Candidates.objects.values_list('post_aspired_for', flat=True).distinct()
+    # Creating the text Input
+    the_text= f"Ebiffo eby'okuloondebwa:  "
+    for i, post in enumerate(posts, start=1):
+        # look up the Luganda equivalent for the number
+        number_in_luganda = numbers_to_luganda.get(i, str(i))
+        the_text += f"{number_in_luganda}:  {post}, "
+
+    # Creating Audio Response
+    response =  requests.post(VOTE_API_URL, headers=headers, json={"inputs": the_text})
+
+    # Output format
+    # audio_filename =   # You can choose a desired filename
+    audio_url = os.path.join(settings.MEDIA_ROOT, 'output_audio.webm')
+    
+    print(type(audio_url))
+    print(os.path.exists(audio_url))
+    with open(audio_url, 'wb') as f:
+        content = response.content       
+        f.write(content)
+   
+    lug_url = reverse('postlug_choice_keypad')  # Replace 'english_vote' with the name of your view
+
+    context = {'posts': list(posts),  'audio_url':audio_url, 'MEDIA_URL': settings.MEDIA_URL, 'lug_url': lug_url}
+
+    return render(request, 'voting/select_post_lugkeypad.html', context)
+
+# select post using keypad
+@csrf_exempt
+def posteng_choice_keypad(request):
+    # posts = Candidates.objects.values_list('post_aspired_for', flat=True).distinct()
+
+    post_number_map = {
+    '1': 'President',
+    '2': 'Member of Parliament',
+    '3': 'Chairperson LCV',
+    # Add more mappings as needed
+    }
+    if request.method == 'POST':
+        # data = json.loads(request.body)
+        key_pressed = request.POST.get('key_pressed')
+        selected_post = post_number_map.get(key_pressed)
+        print(f"Selected post: {selected_post}")
+
+        if selected_post:
+            # Perform actions based on the selected post
+            url = reverse('english_vote_keypad', args=[selected_post])
+            return JsonResponse({'status': 'success', 'selected_post': selected_post, 'url': url})
+
+        else:
+            return JsonResponse({'status': 'error', 'message': 'Invalid key pressed'})
+
+    elif request.method == 'GET':
+        # Handle GET requests
+        return render(request, 'voting/posteng_choice_keypad.html')
+    else:
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+
+    return render(request, 'voting/posteng_choice_keypad.html')
+
+# selecting post by the voter in luganda 
+@csrf_exempt
+def postlug_choice_keypad(request):
+    # posts = Candidates.objects.values_list('post_aspired_for', flat=True).distinct()
+
+    post_number_map = {
+    '1': 'President',
+    '2': 'Member of Parliament',
+    '3': 'Chairperson LCV',
+    # Add more mappings as needed
+    }
+    if request.method == 'POST':
+        # data = json.loads(request.body)
+        key_pressed = request.POST.get('key_pressed')
+        selected_post = post_number_map.get(key_pressed)
+        print(f"Selected post: {selected_post}")
+
+        if selected_post:
+            # Perform actions based on the selected post
+            url = reverse('luganda_vote_keypad', args=[selected_post])
+            return JsonResponse({'status': 'success', 'selected_post': selected_post, 'url': url})
+
+        else:
+            return JsonResponse({'status': 'error', 'message': 'Invalid key pressed'})
+
+    elif request.method == 'GET':
+        # Handle GET requests
+        return render(request, 'voting/postlug_choice_keypad.html')
+    else:
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+
+    return render(request, 'voting/postlug_choice_keypad.html')
+
+# reading out candidadte in English TTS under keypad
+def english_vote_keypad(request, post_aspired_for):
+    candidates = Candidates.objects.filter(post_aspired_for=post_aspired_for).order_by('?')
+    # Creating the text Input
+    the_text= f"Candidates for {post_aspired_for}. "
+    for i, candidate in enumerate(candidates, start=1):
+        the_text += f"{i}: {candidate.full_name()}, "
+
+    # Output format
+    # audio_filename =   # You can choose a desired filename
+    audio_url = os.path.join(settings.MEDIA_ROOT, 'output_audio.webm')
+    
+    print(type(audio_url))
+    print(os.path.exists(audio_url))
+    with open(audio_url, 'wb') as f:
+        # Creating Audio Response
+        response = client.audio.speech.create(
+        model="tts-1",
+        voice = "onyx",
+        input = the_text
+        )
+        content = response.content
+        f.write(content)   
+
+    # Generate the Candidate Vote view with the post aspired for arguement
+    redirect_url = reverse('candidate_engvote_keypad', args=[post_aspired_for]) 
+    print(f"Redirect URL: {redirect_url}")
+         
+    context = {'candidates': candidates, 'post_aspired_for':post_aspired_for, 'audio_url':audio_url,
+                    'MEDIA_URL': settings.MEDIA_URL, 'redirect_url': redirect_url}
+    return render(request, 'voting/englishvote_keypad.html', context)
+
+# reading out candidadte in Luganda TTS under keypad
+numbers_to_luganda = {
+    1: "emu",
+    2: "bbiri",
+    3: "ssatu",
+    4: "nnya",
+}
+def luganda_vote_keypad(request, post_aspired_for):
+    candidates = Candidates.objects.filter(post_aspired_for=post_aspired_for).order_by('?')
+
+    # Creating the text Input
+    the_text= f"Ab'esimbyewo ku kifo ky'obwa {post_aspired_for}. "
+    for i, candidate in enumerate(candidates, start=1):
+        # look up the Luganda equivalent for the number
+        number_in_luganda = numbers_to_luganda.get(i, str(i))
+        the_text += f"{number_in_luganda}:  {candidate.full_name()}, "
+    
+    # Creating Audio Response
+    response = requests.post(VOTE_API_URL, headers=headers, json={"inputs": the_text})
+
+    # Choosing the output format
+    audio_url = os.path.join(settings.MEDIA_ROOT, 'output_audio.webm')
+    
+    print(type(audio_url))
+    print(os.path.exists(audio_url))
+
+    with open(audio_url, "wb") as filename:
+        content = response.content       
+        filename.write(content)
+
+        # if response.status_code == 200:
+        #     filename.write(response.content)
+        #     print('Audio file saved:')
+
+            
+        # else:
+        #     print("response failed with status code", response.status_code)
+
+    redirect_url = reverse('candidate_lugvote_keypad', args=[post_aspired_for]) 
+    print(f"Redirect URL: {redirect_url}")
+
+    context = {'candidates': candidates, 'post_aspired_for':post_aspired_for, 'audio_url':audio_url,
+               'MEDIA_URL': settings.MEDIA_URL, 'redirect_url': redirect_url}
+    
+    return render(request, 'voting/lugandavote.html',context)
+
+# selecting desired candidate using keypad
+@csrf_exempt
+def candidate_engvote_keypad(request, post_aspired_for):
+    if not post_aspired_for:
+        return JsonResponse({'error':'Post aspired for is not provided'})
+
+    press_button = {
+        '1': 1,
+        '2': 2,
+        '3': 3,
+        '4': 4,
+
+    }
+
+
+    if request.method == 'POST':
+        key_pressed = request.POST.get('key_pressed')
+        voted_candidate = press_button.get(key_pressed)
+        print(f"Voted candidate: {voted_candidate}")
+
+        if voted_candidate:
+            # Get the list of candidates for the specific post aspired for
+            print(f"Post aspired for: {post_aspired_for}")
+            candidates_for_post = Candidates.objects.filter(post_aspired_for=post_aspired_for)
+
+            # Loop through the candidates and print their details
+            for candidate in candidates_for_post:
+                print(candidate.full_name())
+
+            print(f"Voted candidate: {voted_candidate}")  # Add this line
+            print(f"Number of candidates: {len(candidates_for_post)}")  # Add this line
+
+
+            # Check if the voted_candidate is within the range of the candidates list
+            if voted_candidate is None or  voted_candidate > len(candidates_for_post):
+                print("Invalid candidate number")
+                return JsonResponse({'error':'Invalid candidate number'}) 
+
+
+            # Checking if the voter has already voted inorder to prevent revoting
+            if CastedVotes.objects.filter(voter_id=request.user.id).exists():
+                print("You have already voted")
+                return JsonResponse({'error':'You have already voted'})
+
+            # Get the selected candidate
+            candidate = candidates_for_post[voted_candidate - 1]
+            print(f"Candidate: {candidate}")
+            print(f"Voter ID: {request.user.id}")
+
+            # Vote for the candidate
+            CastedVotes.objects.create(candidate=candidate, voter_id=request.user)
+
+            print(f"Successfully voted for {candidate.full_name()}!")
+
+            return JsonResponse({'status': 'success', 'voted_candidate': voted_candidate, 'post_aspired_for': post_aspired_for})
+
+        else:
+            print("Invalid key pressed")
+            return JsonResponse({'status': 'error', 'message': 'Invalid key pressed'})
+
+    elif request.method == 'GET':
+        # Handle GET requests
+        return render(request, 'voting/candidate_engvote_keypad.html', {'post_aspired_for': post_aspired_for})
+
+    else:
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+        # Add an indented block here
+
+    return render(request, 'voting/candidate_engvote_keypad.html', {'post_aspired_for': post_aspired_for})
+
+# selecting desired candidate using keypad
+@csrf_exempt
+def candidate_lugvote_keypad(request, post_aspired_for):
+    if not post_aspired_for:
+        return JsonResponse({'error':'Post aspired for is not provided'})
+
+    press_button = {
+        '1': 1,
+        '2': 2,
+        '3': 3,
+        '4': 4,
+
+    }
+
+
+    if request.method == 'POST':
+        key_pressed = request.POST.get('key_pressed')
+        voted_candidate = press_button.get(key_pressed)
+        print(f"Voted candidate: {voted_candidate}")
+
+        if voted_candidate:
+            # Get the list of candidates for the specific post aspired for
+            print(f"Post aspired for: {post_aspired_for}")
+            candidates_for_post = Candidates.objects.filter(post_aspired_for=post_aspired_for)
+
+            # Loop through the candidates and print their details
+            for candidate in candidates_for_post:
+                print(candidate.full_name())
+
+            print(f"Voted candidate: {voted_candidate}")  # Add this line
+            print(f"Number of candidates: {len(candidates_for_post)}")  # Add this line
+
+
+            # Check if the voted_candidate is within the range of the candidates list
+            if voted_candidate is None or  voted_candidate > len(candidates_for_post):
+                print("Invalid candidate number")
+                return JsonResponse({'error':'Invalid candidate number'}) 
+
+
+            # Checking if the voter has already voted inorder to prevent revoting
+            if CastedVotes.objects.filter(voter_id=request.user.id).exists():
+                print("You have already voted")
+                return JsonResponse({'error':'You have already voted'})
+
+            # Get the selected candidate
+            candidate = candidates_for_post[voted_candidate - 1]
+            print(f"Candidate: {candidate}")
+            print(f"Voter ID: {request.user.id}")
+
+            # Vote for the candidate
+            CastedVotes.objects.create(candidate=candidate, voter_id=request.user)
+
+            print(f"Successfully voted for {candidate.full_name()}!")
+
+            return JsonResponse({'status': 'success', 'voted_candidate': voted_candidate, 'post_aspired_for': post_aspired_for})
+
+        else:
+            print("Invalid key pressed")
+            return JsonResponse({'status': 'error', 'message': 'Invalid key pressed'})
+
+    elif request.method == 'GET':
+        # Handle GET requests
+        return render(request, 'voting/candidate_lugvote_keypad.html', {'post_aspired_for': post_aspired_for})
+
+    else:
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+        # Add an indented block here
+
+    return render(request, 'voting/candidate_lugvote_keypad.html', {'post_aspired_for': post_aspired_for})
+
 
 

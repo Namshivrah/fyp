@@ -18,15 +18,9 @@ admin.site.register(PollingStation, PollingStationAdmin)
 
 # Registering the Voters model to the admin panel
 class VotersAdmin(admin.ModelAdmin):
-<<<<<<< HEAD
-<<<<<<< HEAD
+
     list_display = ['id', 'first_name', 'last_name', 'gender', 'voter_type', 'Polling_station', 'date_created', 'fingerprint_xtics']
-=======
-    list_display = ['id', 'first_name', 'last_name', 'gender', 'voter_type', 'Polling_station', 'date_created']
->>>>>>> 3409599e8033f19433aae308b612cf1988cd5850
-=======
-    list_display = ['id', 'first_name', 'last_name', 'gender', 'voter_type', 'Polling_station', 'date_created']
->>>>>>> 3409599e8033f19433aae308b612cf1988cd5850
+
 admin.site.register(Voters, VotersAdmin)
 
 

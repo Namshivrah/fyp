@@ -2,10 +2,7 @@ import requests
 import pyaudio
 import wave
 
-<<<<<<< HEAD
 
-=======
->>>>>>> 3409599e8033f19433aae308b612cf1988cd5850
 # missing key
 
 def query(filename):

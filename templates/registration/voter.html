@@ -1,12 +1,4 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
 {% extends 'registration/home.html'%}
-=======
-{%extends 'registration/home.html'%}
->>>>>>> 3409599e8033f19433aae308b612cf1988cd5850
-=======
-{%extends 'registration/home.html'%}
->>>>>>> 3409599e8033f19433aae308b612cf1988cd5850
 {% load static%}
 
 {% include "registration/navbar.html" %}
@@ -19,8 +11,7 @@
     <br></br>
     {% if submitted%}
 
-<<<<<<< HEAD
-<<<<<<< HEAD
+
     <h4>Go Ahead and View voter list.</h4>
     <br>
 
@@ -28,18 +19,13 @@
       <button type="submit" class="btn btn-warning" id="registerButton">
         <a class = "text-dark" href="{% url 'allvoters' %}" style="text-decoration:none">View Voters</a>
       </button>
-=======
-=======
->>>>>>> 3409599e8033f19433aae308b612cf1988cd5850
+
     <h4>Go Ahead to Scan fingerprint.</h4>
     <br>
 
     <div class="col-12">
       <button type="submit" class="btn btn-warning" id="registerButton">Register</button>
-<<<<<<< HEAD
->>>>>>> 3409599e8033f19433aae308b612cf1988cd5850
-=======
->>>>>>> 3409599e8033f19433aae308b612cf1988cd5850
+
   </div>
 
     {% else%}
@@ -134,12 +120,8 @@
     {% endif %}
   </center>
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 
-=======
-=======
->>>>>>> 3409599e8033f19433aae308b612cf1988cd5850
+
   {% comment %} <script>
     const socket = new WebSocket('ws://127.0.0.1:8000/ws/my_websocket');
 
@@ -164,10 +146,7 @@
         socket.send(JSON.stringify(fingerprintData));
     });
     </script> {% endcomment %}
-<<<<<<< HEAD
->>>>>>> 3409599e8033f19433aae308b612cf1988cd5850
-=======
->>>>>>> 3409599e8033f19433aae308b612cf1988cd5850
+
 {% endblock %}
 
 {% include "registration/footer.html" %}

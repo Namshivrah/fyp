@@ -1,0 +1,102 @@
+{% extends 'verification/lang.html'%}
+{% load static%}
+
+{% include "verification/navbar.html" %}
+
+{% block content %}
+    <center>
+        <div id="recordingStatus"> 
+        </div>
+        
+        <audio id="audioPlayer" method ="POST" controls>
+            <source src="" type="audio/wav">
+        </audio>
+    </center>
+    
+    <script>
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                let cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    let cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        document.addEventListener("DOMContentLoaded", function(event) {
+            const recordingStatus = document.getElementById('recordingStatus');
+            const audioPlayer = document.getElementById('audioPlayer');
+            let recorder;
+            let isListening = false;
+            //text to speech(English)
+
+            // Play the "welcome.wav" file after 3000 milliseconds
+            setTimeout(function() {
+            audioPlayer.src = "{% static "audios/welcome.wav" %}";
+            audioPlayer.play();
+            }, 3000); 
+            
+            // Play the "eng.wav" file after 3000 milliseconds
+            setTimeout(function() {
+            audioPlayer.src = "{% static "audios/press_english.wav" %}";
+            audioPlayer.play();
+            }, 6000);
+        
+            // Play the "lug.wav" file after 20 seconds
+            setTimeout(function() {
+            audioPlayer.src = "{% static "audios/press_luganda.wav" %}";
+            audioPlayer.play();
+            }, 11000);
+        
+            document.addEventListener('keydown', function(event) {
+                const key = event.key;
+                if (key === '1' || key === '2' || key === '3') {
+                    // Send AJAX request to handle language selection
+                    var formData = new FormData();
+                    formData.append('key_pressed', key);
+                    fetch('/language_keypad', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data);
+                        if (key === '1'){
+                            setTimeout(function() {
+                              audioPlayer.src = "{% static "audios/engscan.wav" %}";
+                              audioPlayer.play();
+                            }, 1000); 
+                            //window.location.href = "{% url 'scanner' %}"; 
+                          }else if(key === '2'){
+                            setTimeout(function() {
+                              audioPlayer.src = "{% static "audios/lugscan.wav" %}";
+                              audioPlayer.play();
+                            }, 1000); 
+                          }else{
+                            console.log("Stuff ain't working")
+                          }
+                          // Add an event listener for the 'ended' event
+                        audioPlayer.addEventListener('ended', function() {
+                            window.location.href = "{% url 'verify' %}";
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+                }
+            });
+
+        });    
+
+    </script>
+
+{% endblock %} 
+
+{% include "verification/footer.html" %}
+
