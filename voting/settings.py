@@ -95,12 +95,17 @@ DATABASE_ROUTERS = [
 ]
 
 
-DATABASES ={
+DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',  # Use any valid engine for the default
-        'NAME': BASE_DIR / "db.sqlite3",
-    },
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'fyp',
+        'USER': 'akarah',
+        'PASSWORD': 'betah1234',
+        'HOST': 'localhost',
+        'PORT': '5432',
+    }
 }
+
 '''  
     'one': {
         'ENGINE': 'django.db.backends.postgresql',

@@ -38,19 +38,19 @@
 
             // Play the "welcome.wav" file after 3000 milliseconds
             setTimeout(function() {
-            audioPlayer.src = "{% static "audios/welcome.wav" %}";
+            audioPlayer.src = "{% static 'audios/welcome.wav' %}";
             audioPlayer.play();
             }, 3000); 
             
             // Play the "eng.wav" file after 3000 milliseconds
             setTimeout(function() {
-            audioPlayer.src = "{% static "audios/press_english.wav" %}";
+            audioPlayer.src = "{% static 'audios/press_english.wav' %}";
             audioPlayer.play();
             }, 6000);
         
             // Play the "lug.wav" file after 20 seconds
             setTimeout(function() {
-            audioPlayer.src = "{% static "audios/press_luganda.wav" %}";
+            audioPlayer.src = "{% static 'audios/press_luganda.wav' %}";
             audioPlayer.play();
             }, 11000);
         
@@ -69,13 +69,13 @@
                         console.log(data);
                         if (key === '1'){
                             setTimeout(function() {
-                              audioPlayer.src = "{% static "audios/engscan.wav" %}";
+                              audioPlayer.src = "{% static 'audios/engscan.wav' %}";
                               audioPlayer.play();
                             }, 1000); 
                             //window.location.href = "{% url 'scanner' %}"; 
                           }else if(key === '2'){
                             setTimeout(function() {
-                              audioPlayer.src = "{% static "audios/lugscan.wav" %}";
+                              audioPlayer.src = "{% static 'audios/lugscan.wav' %}";
                               audioPlayer.play();
                             }, 1000); 
                           }else{

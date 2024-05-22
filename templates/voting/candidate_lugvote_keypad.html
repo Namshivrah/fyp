@@ -65,7 +65,7 @@
 </center>  
 
 <script>
-    {% comment %} the Cookie {% endcomment %}
+    // {% comment %} the Cookie {% endcomment %}
     function getCookie(name) {
       let cookieValue = null;
       if (document.cookie && document.cookie !== '') {
@@ -85,7 +85,7 @@
     
       // Play the "welcome.wav" file after 3000 milliseconds
       setTimeout(function() {
-        audioPlayer.src = "{% static "audios/eng_choice.wav" %}";
+        audioPlayer.src = "{% static 'audios/eng_choice.wav' %}";
         audioPlayer.play();
       }, 1000); 
 

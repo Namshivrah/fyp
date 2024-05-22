@@ -101,8 +101,8 @@ def scan_save_fingerprint(request, id):
 
 # function for verifying the fingerprint
 DB_HOST = "localhost"
-DB_NAME = "akarah"
-DB_USER = "admin"
+DB_NAME = "fyp"
+DB_USER = "akarah"
 DB_PORT = "5432"
 DB_PASSWORD = "betah1234"
 
@@ -148,8 +148,8 @@ def get_data_from_database():
         try:
             # with connection.cursor() as cursor:
                 # cursor.execute("SELECT id, fingerprint_xtics1")
-            Cursor.execute(query)
-            voters = Cursor.fetchall()
+            # Cursor.execute(query)
+            voters = Voters.oject.all()
             print(voters)
                 # return voters
 
