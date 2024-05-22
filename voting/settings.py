@@ -39,9 +39,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_middleware_global_request',
-    'freedom',
+    # 'freedom',
     'django_bootstrap5',
     'channels',
+    'freedom.apps.FreedomConfig',
     
     
 ]
@@ -98,7 +99,7 @@ DATABASE_ROUTERS = [
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'fyp',
+        'NAME': 'fyp2',
         'USER': 'akarah',
         'PASSWORD': 'betah1234',
         'HOST': 'localhost',

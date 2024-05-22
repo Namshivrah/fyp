@@ -6,6 +6,20 @@
 
 {% block content %}
 <center>
+
+      <div class="container">
+                <div class="row">
+                <div class="col-lg-8">
+                    {% for message in messages %}
+                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <strong>Please Note!</strong> {{message}}.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endfor %}
+                </div>
+                </div>
+            </div>
+
     <h1>Add Fingerprint</h1>
 </center>
 
@@ -20,11 +34,19 @@
         {{voter.Polling_station}}
         {{voter.date_of_birth}}
         
+        {% if voter.fingerprint_xtics %}
         <div>
+            <p>Already Captured</p>
+        </div>
+        
+        {% else %}
+         <div>
             <button type="submit" class="btn btn-warning" id="registerButton">
                 <a class="text-dark" href="{% url 'scan_save_fingerprint' id=voter.id %}" style="text-decoration:none">Add Fingerprint</a> 
-                </button>
+            </button>
         </div>
+        {% endif %}
+
         {% comment %} <h6>Special Fxns</h6> {% endcomment %}
         
 </div>

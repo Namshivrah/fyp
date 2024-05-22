@@ -7,7 +7,7 @@ import os
 from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from .models import Voters, PollingStation, Candidates, GENDERS, VOTER_TYPES, POLITICAL_PARTY, ASPIRING_POSTS, FingerPrints, CastedVotes
+from .models import Voters, Polling_Station, Candidates, GENDERS, VOTER_TYPES, POLITICAL_PARTY, ASPIRING_POSTS, FingerPrints, CastedVotes
 from .forms import VoterRegistrationForm, CandidateRegistrationForm
 from django.views.decorators.csrf import csrf_exempt
 from django.urls import reverse
@@ -33,6 +33,13 @@ import time
 import string
 import time
 from time import sleep
+from Verifyscanner.comparison import comparison
+from Verifyscanner.connect_to_database import connect_to_database, close_database_connection
+from datetime import date
+from django.http import request
+from Verifyscanner.main import get_data_from_database  # Import the get_data_from_database function
+from django.contrib import messages
+
 # import Levenshtein
 # from IPython.display import Audio
 
@@ -43,12 +50,12 @@ from time import sleep
 # fuction for all voters
 def allvoters(request):
 
-    voters = Voters.objects.order_by('-date_created')[:5]
+    voters = Voters.objects.all()
 
 # fuction for all voters
 def allvoters(request):
 
-    voters = Voters.objects.all()
+    voters = Voters.objects.all().order_by('-created_at')
 
     content = {
         'voters': voters,
@@ -78,7 +85,7 @@ def scan_save_fingerprint(request, id):
             raise ValueError('The given fingerprint sensor password is wrong!')
         
         print("Place Finger")
-        time.sleep(2)
+        time.sleep(3)
 
         while f.readImage() == False:
             pass
@@ -91,91 +98,33 @@ def scan_save_fingerprint(request, id):
 
         voter.fingerprint_xtics = fingerprint_xtics
         voter.save()
+        
+        messages.success(request, 'Fingerprint saved successfully')
 
         return redirect(reverse('voter_details', args=[id]))
 
     except Exception as e:
+        messages.error(request, "Operation failed!")
         print('Operation failed!')
         print('Exception message: ' + str(e))
+        # messages.info(request, 'Please try again')
         return redirect(reverse('voter_details', args=[id]))
 
-# function for verifying the fingerprint
-DB_HOST = "localhost"
-DB_NAME = "fyp"
-DB_USER = "akarah"
-DB_PORT = "5432"
-DB_PASSWORD = "betah1234"
-
-def connect_to_database():
-    try:
-        connection = psycopg2.connect(
-            host=DB_HOST,
-            port=DB_PORT,
-            database=DB_NAME,
-            user=DB_USER,
-            password=DB_PASSWORD
-        )
-        print("Connected to the database.")
-        return connection
-    except Exception as e:
-        print(f"Error connecting to the database: {e}")
-        return None
-
-def close_database_connection(connection):
-    if connection:
-        connection.close()
-        print("PostgreSQL connection is closed")
-
-# ---------------- comparison --------------------
-def comparison(charactertics1, charactertics2):
-    matching_count = sum(x==y for x, y in zip(charactertics1, charactertics2))
-
-    if len(charactertics1) > len(charactertics2):
-        total_elements = len(charactertics2)
-    else:
-        total_elements = len(charactertics1)
-
-    percentage_on_matching = (matching_count / total_elements) * 100
-
-    # print(f"Matching Percentage: {percentage_on_matching}")
-
-    return percentage_on_matching
-
-# verification of the fingerprint
-def get_data_from_database():
-    connection = connect_to_database()
-    if connection:
-        try:
-            # with connection.cursor() as cursor:
-                # cursor.execute("SELECT id, fingerprint_xtics1")
-            # Cursor.execute(query)
-            voters = Voters.oject.all()
-            print(voters)
-                # return voters
-
-            # Create an index of the fingerprints
-            # index = create_index([voter[1] for voter in voters])
-            return voters  
-
-        except Exception as e:
-            print(f"Error fetching data from the database: {str(e)}")
-        finally:
-            close_database_connection(connection)
-
-    return None
 
 def main(request):
     connection = None  # Initialize the connection variable
 
     try:
+
         f = PyFingerprint('/dev/ttyS0', 57600, 0xFFFFFFFF, 0x00000000)
         if not f.verifyPassword():
             raise ValueError('The given fingerprint sensor password is wrong!')
 
-        matched_voter = get_data_from_database()  # Establish a database connection within main
+        get_data_from_database()  # Establish a database connection within main
 
         # display.random_message("Press Finger")
-        sleep(3)
+        print ("Waiting for finger...")
+        sleep(1)
 
         while not f.readImage():
             pass
@@ -184,18 +133,17 @@ def main(request):
         scanned_xtics = f.downloadCharacteristics(FINGERPRINT_CHARBUFFER1)
         # print(scanned_xtics)
 
-        # index = get_data_from_database()
+        data = get_data_from_database()
 
-        # data = get_data_from_database()
+        for voter in data:
+            # print(voter)
+            voter_characteristics1 = eval(voter[2])
+            stored_characteristics1 = voter_characteristics1
 
-        # Match the scanned fingerprint with the index
-        # matched_voter = match_fingerprint(scanned_xtics, index)
+            
 
-        if matched_voter:
-            print("Fingerprint matched!")
-            stored_characteristics1 = eval(matched_voter[1])
-
-            if comparison(scanned_xtics, stored_characteristics1) > 85:
+            if comparison(scanned_xtics, stored_characteristics1)>85:
+                print("sam")
                 language_key = request.session.get('language_key', 'default_key')
 
                 # Map the language_key to a view function name
@@ -214,9 +162,9 @@ def main(request):
             print("Fingerprint did not match.")
             # display.random_message("Not Found")
 
+                
     except Exception as e:
         print(f'Exception occurred: {str(e)}')
-
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
 
@@ -224,8 +172,7 @@ def main(request):
         if connection:
             close_database_connection(connection)
 
-
-    # If everything went well, return a successful response
+     # If everything went well, return a successful response
     return JsonResponse({'status': 'success'})
 
 
@@ -240,7 +187,7 @@ def home(request):
     return render(request, 'registration/home.html', {'images': images})
 
 def voter_register(request):
-    polling_stations = PollingStation.objects.all()
+    polling_stations = Polling_Station.objects.all()
     submitted = False
     if request.method =='POST':
         print(1)
@@ -268,9 +215,9 @@ def voter_register(request):
             print(polling_station_id)
             print(41)
             try:
-                polling_station = PollingStation.objects.get(id=polling_station_id)
+                polling_station = Polling_Station.objects.get(id=polling_station_id)
                 print(polling_station)
-            except PollingStation.DoesNotExist:
+            except Polling_Station.DoesNotExist:
                 messages.error(request, 'Invalid Polling Station.')
                 return render(request, 'registration/voter.html', {'polling_stations': polling_stations, 'form':form})
             print(4)
