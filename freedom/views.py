@@ -39,6 +39,8 @@ from datetime import date
 from django.http import request
 from Verifyscanner.main import get_data_from_database  # Import the get_data_from_database function
 from django.contrib import messages
+from django.contrib.sessions.models import Session
+
 
 # import Levenshtein
 # from IPython.display import Audio
@@ -111,19 +113,32 @@ def scan_save_fingerprint(request, id):
         return redirect(reverse('voter_details', args=[id]))
 
 
+
+def sessions(request):
+    request.session['language_key'] = '1'
+    request.session.save()  # Explicitly save the session
+    print("Session language_key set to:", request.session['language_key'])
+    print("Session ID set to:", request.session.session_key)
+    print("Session data after setting language_key:", list(request.session.items()))
+    return JsonResponse({'status': 'success', 'message': 'Session created successfully'})
+
 def main(request):
+    request.session['language_key'] = '1'
+    request.session.save()  # Explicitly save the session
+    print("Session language_key set to:", request.session['language_key'])
+    print("Session ID set to:", request.session.session_key)
+    print("Session keys:", list(request.session.keys()))
+    print("Session language_key:", request.session.get('language_key'))
     connection = None  # Initialize the connection variable
 
     try:
-
         f = PyFingerprint('/dev/ttyS0', 57600, 0xFFFFFFFF, 0x00000000)
         if not f.verifyPassword():
             raise ValueError('The given fingerprint sensor password is wrong!')
 
         get_data_from_database()  # Establish a database connection within main
 
-        # display.random_message("Press Finger")
-        print ("Waiting for finger...")
+        print("Waiting for finger...")
         sleep(1)
 
         while not f.readImage():
@@ -131,49 +146,170 @@ def main(request):
 
         f.convertImage(FINGERPRINT_CHARBUFFER1)
         scanned_xtics = f.downloadCharacteristics(FINGERPRINT_CHARBUFFER1)
-        # print(scanned_xtics)
 
         data = get_data_from_database()
 
         for voter in data:
-            # print(voter)
             voter_characteristics1 = eval(voter[2])
             stored_characteristics1 = voter_characteristics1
 
-            
-
-            if comparison(scanned_xtics, stored_characteristics1)>85:
+            if comparison(scanned_xtics, stored_characteristics1) > 85:
                 print("sam")
-                language_key = request.session.get('language_key', 'default_key')
+                language_key = request.session.get('language_key')
+                print("The language key:", language_key)
 
-                # Map the language_key to a view function name
-                language_map = {
-                    '1': 'select_post',  # English language
-                    '2': 'select_post_lug',  # Luganda language
-                    '3': 'select_post_keypad',  # English keypad
-                    '4': 'select_post_lugkeypad',  # Luganda keypad
-                }
-                view_name = language_map.get(language_key, 'default_view')  # Default to a default view if no valid key is found
+                if language_key:
+                    # Map the language_key to a view function name
+                    language_map = {
+                        '1': 'select_post',  # English language
+                        '2': 'select_post_lug',  # Luganda language
+                        '3': 'select_post_keypad',  # English keypad
+                        '4': 'select_post_lugkeypad',  # Luganda keypad
+                    }
+                    view_name = language_map.get(language_key, None)
+                    if view_name:
+                        print("The view name:", view_name)
+                        # Redirect to the specific page
+                        return redirect(reverse(view_name))
+                    else:
+                        return JsonResponse({'status': 'error', 'message': 'Invalid language key'}, status=400)
+                else:
+                    return JsonResponse({'status': 'error', 'message': 'Language key not found in session'}, status=400)
 
-                # Redirect to the specific page
-                return redirect(reverse(view_name))
+        print("Fingerprint did not match.")
 
-        else:
-            print("Fingerprint did not match.")
-            # display.random_message("Not Found")
-
-                
     except Exception as e:
         print(f'Exception occurred: {str(e)}')
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-
 
     finally:
         if connection:
             close_database_connection(connection)
 
-     # If everything went well, return a successful response
     return JsonResponse({'status': 'success'})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# def sessions(request):
+#     request.session['language_key'] = '1'
+#     request.session.save()  # Explicitly save the session
+#     print("Session language_key set to:", request.session['language_key'])
+#     print("Session ID set to:", request.session.session_key)
+#     print("Session data after setting language_key:", request.session.items())
+#     return JsonResponse({'status': 'success', 'message': 'Session created successfully'})
+
+
+
+# def main(request):
+#     print("Session keys:", request.session.keys())
+#     print("Session language_key:", request.session.get('language_key'))
+#     connection = None  # Initialize the connection variable
+
+#     try:
+
+#         f = PyFingerprint('/dev/ttyS0', 57600, 0xFFFFFFFF, 0x00000000)
+#         if not f.verifyPassword():
+#             raise ValueError('The given fingerprint sensor password is wrong!')
+
+#         get_data_from_database()  # Establish a database connection within main
+
+#         # display.random_message("Press Finger")
+#         print ("Waiting for finger...")
+#         sleep(1)
+
+#         while not f.readImage():
+#             pass
+
+#         f.convertImage(FINGERPRINT_CHARBUFFER1)
+#         scanned_xtics = f.downloadCharacteristics(FINGERPRINT_CHARBUFFER1)
+#         # print(scanned_xtics)
+
+#         data = get_data_from_database()
+
+#         for voter in data:
+#             # print(voter)
+#             voter_characteristics1 = eval(voter[2])
+#             stored_characteristics1 = voter_characteristics1
+
+            
+
+#             if comparison(scanned_xtics, stored_characteristics1)>85:
+#                 print("sam")
+#                 language_key = request.session.get('language_key')
+#                 print("The language key:", language_key)
+                
+
+#                  # Proceed only if language_key is found in session
+#                 if language_key:
+#                     # Map the language_key to a view function name
+#                     language_map = {
+#                         '1': 'select_post',  # English language
+#                         '2': 'select_post_lug',  # Luganda language
+#                         '3': 'select_post_keypad',  # English keypad
+#                         '4': 'select_post_lugkeypad',  # Luganda keypad
+#                     }
+#                     view_name = language_map.get(language_key, None)
+#                     if view_name:
+#                         print("The view name:", view_name)
+#                         # Redirect to the specific page
+#                         return redirect(reverse(view_name))
+#                     else:
+#                         return JsonResponse({'status': 'error', 'message': 'Invalid language key'}, status=400)
+#                 else:
+#                     return JsonResponse({'status': 'error', 'message': 'Language key not found in session'}, status=400)
+
+
+
+
+#                 # if language_key is None:
+#                 #     return JsonResponse({'status': 'error', 'message': 'Language key not found in session'}, status=400)
+#                 # print("The language key:", language_key)
+                
+#                 # # Map the language_key to a view function name
+#                 # language_map = {
+#                 #     '1': 'select_post',  # English language
+#                 #     '2': 'select_post_lug',  # Luganda language
+#                 #     '3': 'select_post_keypad',  # English keypad
+#                 #     '4': 'select_post_lugkeypad',  # Luganda keypad
+#                 # }
+#                 # view_name = language_map.get(language_key, None)  # Default to a default view if no valid key is found
+#                 # print("The view name:", view_name)
+#                 # # Redirect to the specific page
+#                 # return redirect(reverse(view_name))
+
+#         else:
+#             print("Fingerprint did not match.")
+#             # display.random_message("Not Found")
+
+                
+#     except Exception as e:
+#         print(f'Exception occurred: {str(e)}')
+#         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+#     finally:
+#         if connection:
+#             close_database_connection(connection)
+
+#      # If everything went well, return a successful response
+#     return JsonResponse({'status': 'success'})
 
 
 

@@ -37,7 +37,7 @@ urlpatterns = [
     path('select_post_keypad', views.select_post_keypad, name='select_post_keypad'),
     path('posteng_choice_keypad', views.posteng_choice_keypad, name='posteng_choice_keypad'),
     path('postlug_choice_keypad', views.postlug_choice_keypad, name='postlug_choice_keypad'),
-
+    path('sessions', views.sessions, name ='sessions'),
 ]
 
 if settings.DEBUG:
