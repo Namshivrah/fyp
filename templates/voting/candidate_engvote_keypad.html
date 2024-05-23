@@ -85,7 +85,7 @@
     
       // Play the "welcome.wav" file after 3000 milliseconds
       setTimeout(function() {
-        audioPlayer.src = "{% static 'audios/lug_choice.wav' %}";
+        audioPlayer.src = "{% static 'audios/eng_choice.wav' %}";
         audioPlayer.play();
       }, 1000); 
 
@@ -107,7 +107,11 @@
             .then(response => response.json())
             .then(data => {
                 console.log(data);
-        
+                if (data.status === 'success') {
+                  // Play the audio file
+                  audioPlayer.src = "{% static 'audios/eng_choice.wav' %}";
+                  audio.play();
+                }
             })
             .catch(error => {
                 // Log any errors to the console

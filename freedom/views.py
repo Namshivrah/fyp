@@ -40,13 +40,13 @@ from django.http import request
 from Verifyscanner.main import get_data_from_database  # Import the get_data_from_database function
 from django.contrib import messages
 from django.contrib.sessions.models import Session
+from django.core.exceptions import ObjectDoesNotExist
+from uuid import UUID
+
 
 
 # import Levenshtein
 # from IPython.display import Audio
-
-# Enable secure mode (SSL) if you are passing sensitive data
-# detectlanguage.configuration.secure = True
 
 
 # fuction for all voters
@@ -157,14 +157,16 @@ def main(request):
                 print("sam")
                 language_key = request.session.get('language_key')
                 print("The language key:", language_key)
+                
+                request.session['voter_id'] =str(voter[0])  # Assuming the voter's ID is the first element in the voter tuple
 
                 if language_key:
                     # Map the language_key to a view function name
                     language_map = {
-                        '1': 'select_post',  # English language
-                        '2': 'select_post_lug',  # Luganda language
-                        '3': 'select_post_keypad',  # English keypad
-                        '4': 'select_post_lugkeypad',  # Luganda keypad
+                        '1': 'select_post_keypad',  # English language
+                        '2': 'select_post_lugkeypad',  # Luganda language
+                        '3': 'select_post',  # English keypad
+                        '4': 'select_post_lug',  # Luganda keypad
                     }
                     view_name = language_map.get(language_key, None)
                     if view_name:
@@ -186,132 +188,7 @@ def main(request):
         if connection:
             close_database_connection(connection)
 
-    return JsonResponse({'status': 'success'})
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# def sessions(request):
-#     request.session['language_key'] = '1'
-#     request.session.save()  # Explicitly save the session
-#     print("Session language_key set to:", request.session['language_key'])
-#     print("Session ID set to:", request.session.session_key)
-#     print("Session data after setting language_key:", request.session.items())
-#     return JsonResponse({'status': 'success', 'message': 'Session created successfully'})
-
-
-
-# def main(request):
-#     print("Session keys:", request.session.keys())
-#     print("Session language_key:", request.session.get('language_key'))
-#     connection = None  # Initialize the connection variable
-
-#     try:
-
-#         f = PyFingerprint('/dev/ttyS0', 57600, 0xFFFFFFFF, 0x00000000)
-#         if not f.verifyPassword():
-#             raise ValueError('The given fingerprint sensor password is wrong!')
-
-#         get_data_from_database()  # Establish a database connection within main
-
-#         # display.random_message("Press Finger")
-#         print ("Waiting for finger...")
-#         sleep(1)
-
-#         while not f.readImage():
-#             pass
-
-#         f.convertImage(FINGERPRINT_CHARBUFFER1)
-#         scanned_xtics = f.downloadCharacteristics(FINGERPRINT_CHARBUFFER1)
-#         # print(scanned_xtics)
-
-#         data = get_data_from_database()
-
-#         for voter in data:
-#             # print(voter)
-#             voter_characteristics1 = eval(voter[2])
-#             stored_characteristics1 = voter_characteristics1
-
-            
-
-#             if comparison(scanned_xtics, stored_characteristics1)>85:
-#                 print("sam")
-#                 language_key = request.session.get('language_key')
-#                 print("The language key:", language_key)
-                
-
-#                  # Proceed only if language_key is found in session
-#                 if language_key:
-#                     # Map the language_key to a view function name
-#                     language_map = {
-#                         '1': 'select_post',  # English language
-#                         '2': 'select_post_lug',  # Luganda language
-#                         '3': 'select_post_keypad',  # English keypad
-#                         '4': 'select_post_lugkeypad',  # Luganda keypad
-#                     }
-#                     view_name = language_map.get(language_key, None)
-#                     if view_name:
-#                         print("The view name:", view_name)
-#                         # Redirect to the specific page
-#                         return redirect(reverse(view_name))
-#                     else:
-#                         return JsonResponse({'status': 'error', 'message': 'Invalid language key'}, status=400)
-#                 else:
-#                     return JsonResponse({'status': 'error', 'message': 'Language key not found in session'}, status=400)
-
-
-
-
-#                 # if language_key is None:
-#                 #     return JsonResponse({'status': 'error', 'message': 'Language key not found in session'}, status=400)
-#                 # print("The language key:", language_key)
-                
-#                 # # Map the language_key to a view function name
-#                 # language_map = {
-#                 #     '1': 'select_post',  # English language
-#                 #     '2': 'select_post_lug',  # Luganda language
-#                 #     '3': 'select_post_keypad',  # English keypad
-#                 #     '4': 'select_post_lugkeypad',  # Luganda keypad
-#                 # }
-#                 # view_name = language_map.get(language_key, None)  # Default to a default view if no valid key is found
-#                 # print("The view name:", view_name)
-#                 # # Redirect to the specific page
-#                 # return redirect(reverse(view_name))
-
-#         else:
-#             print("Fingerprint did not match.")
-#             # display.random_message("Not Found")
-
-                
-#     except Exception as e:
-#         print(f'Exception occurred: {str(e)}')
-#         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-
-
-#     finally:
-#         if connection:
-#             close_database_connection(connection)
-
-#      # If everything went well, return a successful response
-#     return JsonResponse({'status': 'success'})
-
-
+    return JsonResponse({'status': 'success', 'message': 'Fingerprint matched!!'})
 
 # Create your views here.
 def home(request):
@@ -1232,14 +1109,31 @@ def candidate_engvote_keypad(request, post_aspired_for):
             # Get the selected candidate
             candidate = candidates_for_post[voted_candidate - 1]
             print(f"Candidate: {candidate}")
-            print(f"Voter ID: {request.user.id}")
+            
 
-            # Vote for the candidate
-            CastedVotes.objects.create(candidate=candidate, voter_id=request.user)
+            # get voter id from session or request
+            voter_id = UUID(request.session.get('voter_id', ''))
+            if not voter_id:
+                return JsonResponse({'error': 'Voter ID not found'})
+            try:
+                # fetch the voter from the database
+                voter = Voters.objects.get(id=voter_id)
+            except ObjectDoesNotExist:
 
-            print(f"Successfully voted for {candidate.full_name()}!")
+                return JsonResponse({'status': 'error','message': 'Voter does not exist'}, status=404)
+            
+            print(f"Voter ID: {voter.id}")
 
-            return JsonResponse({'status': 'success', 'voted_candidate': voted_candidate, 'post_aspired_for': post_aspired_for})
+            # Vote for the candidate but the voter votes only once 
+            try:
+                # Check if the voter has already voted
+                existing_vote = CastedVotes.objects.get(voter_id=voter_id)
+                return JsonResponse({'status': 'error', 'message': 'Voter has already cast a vote'}, status=400)
+            except ObjectDoesNotExist:
+                # If the voter has not voted, cast the vote
+                CastedVotes.objects.create(candidate=candidate, voter_id=voter_id)
+                print(f"Successfully voted for {candidate.full_name()}!")
+                return JsonResponse({'status': 'success', 'voted_candidate': voted_candidate, 'post_aspired_for': post_aspired_for})
 
         else:
             print("Invalid key pressed")
@@ -1286,7 +1180,6 @@ def candidate_lugvote_keypad(request, post_aspired_for):
 
             print(f"Voted candidate: {voted_candidate}")  # Add this line
             print(f"Number of candidates: {len(candidates_for_post)}")  # Add this line
-
 
             # Check if the voted_candidate is within the range of the candidates list
             if voted_candidate is None or  voted_candidate > len(candidates_for_post):

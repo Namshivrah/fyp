@@ -3,7 +3,7 @@
 <html>
 <head>
 
-  <title>{% block title %}Luganda Vote{% endblock %}</title>
+  <title>{% block title %}Select Post{% endblock %}</title>
 {% load django_bootstrap5 %}
 {% bootstrap_css %}
 {% bootstrap_javascript %}
@@ -51,35 +51,26 @@
 {% include "verification/navbar.html" %}
 {% block content %}
 <center>
+    {% comment %} <p>You are voting for the post: {{ post_aspired_for }}</p> {% endcomment %}
+     <h1>Available Posts To Vote For</h1>
 
-     <h1> Ab'esimbyewo ku kifo ky'obwa {{ post_aspired_for }}</h1>
+    {% comment %} <p>Debug: {{ audio_url }}</p>  Add this line for debugging  {% endcomment %} 
+    <audio id="audioPlayer" method ="POST" controls autoplay>
+      <source src="{{ MEDIA_URL }}output_audio.webm" type="audio/webm">
+      Your browser does not support the audio element.
+    </audio>
     
-    <div id="recordingStatus">
-    </div>    
-
-    <!--<p>Debug: {{ audio_url }}</p>   Add this line for debugging -->
-      <audio controls autoplay id="myAudio" method ="POST">
-        <source src="{{ MEDIA_URL }}output_audio.webm" type="audio/webm">
-        Your browser does not support the audio element.
-      </audio>
-      
-      {% comment %} <label for="speed">Playback speed:</label>
-      <input type="range" id="speed" name="speed" min="0.5" max="2.0" step="0.1" value="0.5">
-      {% endcomment %}
 
 </center>  
 
     <script>
-        var audio = document.getElementById('myAudio');
-          audio.playbackRate = 0.8;
-
-          console.log("{{redirect_url}}");
-
-    setTimeout(function(){
-      console.log("Redirect URL: " + "{{redirect_url}}");
-      window.location.href = "{{redirect_url}}";
-    }, 15000);
-           
+        var audio = document.getElementById("audioPlayer");
+        audio.playbackRate = 0.8;
+        
+        // Redirect to english vote website after 3000 milliseconds
+        setTimeout(function() {
+            window.location.href="{{ url }}";
+          }, 10000);  
     </script>
 
 
@@ -93,5 +84,3 @@
 
 </body>
 </html>
-
-        
