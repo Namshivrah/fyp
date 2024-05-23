@@ -48,6 +48,7 @@ from uuid import UUID
 # import Levenshtein
 # from IPython.display import Audio
 
+
 # fuction for all voters
 def allvoters(request):
 
@@ -1232,7 +1233,7 @@ def tally_votes(request):
         # votes = CastedVotes.objects.values('candidate').annotate(vote_count=Count('candidate'))
     votes = {}
      # Covert the Queryset to a list of dictionaries
-    votes = list(votes)
+    # votes = list(votes)
 
     # Loop through the candidates and get the number of votes for each candidate
     for candidate in candidates:
@@ -1246,4 +1247,4 @@ def tally_votes(request):
     # Get the total number of votes cast
     total_votes = sum(votes.values())
     context = {'votes': sorted_votes, 'winner': winner, 'winning_votes': winning_votes, 'total_votes': total_votes}
-    return render(request, 'talling/talling.html', context)
+    return render(request, 'tallying/tallying.html', context)

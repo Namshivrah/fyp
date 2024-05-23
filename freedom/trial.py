@@ -1,76 +1,41 @@
-import requests
-import pyaudio
-import wave
+import pyaudio, wave
+import os
+import sys
+
+sys.stderr = open(os.devnull, 'w')
 
 
-# missing key
-
-def query(filename):
-    with open(filename, "rb") as f:
-        data = f.read()
-    response = requests.post(API_URL, headers=headers, data=data)
-    response=response.json()
-    if "text" not in response:
-        return response['error']
-    return response['text']
-
-def record_audio():
-    # Code to record audio and save it as a WAV file
-    # You can use libraries like pyaudio or sounddevice to handle audio recording
-
-    # Example using pyaudio
-    CHUNK = 1024
+def record_audio(duration, fs=48000):
     FORMAT = pyaudio.paInt16
     CHANNELS = 1
-    RATE = 16000
-    RECORD_SECONDS = 3
-    filename = "audio_file.wav"
-
-    p = pyaudio.PyAudio()
-
-    stream = p.open(format=FORMAT,
-                    channels=CHANNELS,
-                    rate=RATE,
-                    input=True,
-                    frames_per_buffer=CHUNK)
-
+    RATE = fs
+    CHUNK = 1024
+    WAVE_OUTPUT_FILENAME = "test_voice.wav"
+    DEVICE_INDEX = 2
+    # Initialize the audio stream
+    audio = pyaudio.PyAudio()
+    # Open the audio stream
+    stream = audio.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK, input_device_index=DEVICE_INDEX)
+    print("Recording started...")
+    # Create a buffer to store the recorded audio frames
     frames = []
-
-    print("Recording...")
-
-    for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
+    # Record audio for the specified duration
+    for i in range(0, int(RATE / CHUNK * duration)):
         data = stream.read(CHUNK)
         frames.append(data)
-
-    print("Finished recording.")
-
+    print("Recording finished.")
+    # Stop and close the audio stream
     stream.stop_stream()
     stream.close()
-    p.terminate()
+    audio.terminate()
+    # Save the recorded audio to a WAV file
+    wave_file = wave.open(WAVE_OUTPUT_FILENAME, 'wb')
+    wave_file.setnchannels(CHANNELS)
+    wave_file.setsampwidth(audio.get_sample_size(FORMAT))
+    wave_file.setframerate(RATE)
+    wave_file.writeframes(b''.join(frames))
+    wave_file.close()
+    return WAVE_OUTPUT_FILENAME
 
-    # Save the recorded audio as a WAV file
-    wf = wave.open(filename, 'wb')
-    wf.setnchannels(CHANNELS)
-    wf.setsampwidth(p.get_sample_size(FORMAT))
-    wf.setframerate(RATE)
-    wf.writeframes(b''.join(frames))
-    wf.close()
-    return filename
-
-# Example usage
-# audio_file = 'E:/Voting django/voting/static/responses/responses.wav' # Path to the audio file
-# record_audio(audio_file)
-
-output = query(record_audio())
-print(output)
-
-import sounddevice as sd
-
-def print_microphones():
-    microphones = sd.query_devices()
-    print("Connected microphones:")
-    for idx, device in enumerate(microphones):
-        if 'input' in device['name'].lower():
-            print(f"{idx + 1}. {device['name']}")
-
-# print_microphones()
+audio_file = record_audio(10)
+print("Audio file saved as", audio_file)

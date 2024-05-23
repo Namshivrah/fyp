@@ -38,6 +38,7 @@ urlpatterns = [
     path('posteng_choice_keypad', views.posteng_choice_keypad, name='posteng_choice_keypad'),
     path('postlug_choice_keypad', views.postlug_choice_keypad, name='postlug_choice_keypad'),
     path('sessions', views.sessions, name ='sessions'),
+    path('tally_votes', views.tally_votes, name='tally_votes'),
 ]
 
 if settings.DEBUG:
