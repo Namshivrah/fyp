@@ -1229,8 +1229,8 @@ def tally_votes(request):
     # Get the list of candidates
     candidates = Candidates.objects.all()
     # Create a dictionary to store the votes for each candidate
-    votes = CastedVotes.objects.values('candidate').annotate(vote_count=Count('candidate'))
-   
+        # votes = CastedVotes.objects.values('candidate').annotate(vote_count=Count('candidate'))
+    votes = {}
      # Covert the Queryset to a list of dictionaries
     votes = list(votes)
 
@@ -1246,4 +1246,4 @@ def tally_votes(request):
     # Get the total number of votes cast
     total_votes = sum(votes.values())
     context = {'votes': sorted_votes, 'winner': winner, 'winning_votes': winning_votes, 'total_votes': total_votes}
-    return render(request, 'voting/tally_votes.html', context)
+    return render(request, 'talling/talling.html', context)
