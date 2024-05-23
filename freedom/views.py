@@ -48,7 +48,6 @@ from uuid import UUID
 # import Levenshtein
 # from IPython.display import Audio
 
-
 # fuction for all voters
 def allvoters(request):
 
@@ -1220,3 +1219,32 @@ def candidate_lugvote_keypad(request, post_aspired_for):
 
 
 
+# ------------------TALLYING ACTIVITIES ----------------------------
+def tally_votes(request):
+     # Query the database for all votes and count the number of votes for each candidate
+    # vote_counts = CastedVotes.objects.values('candidate').annotate(vote_count=Count('candidate'))
+
+    # # Covert the Queryset to a list of dictionaries
+    # vote_counts = list(vote_counts)
+
+    # Get the list of candidates
+    candidates = Candidates.objects.all()
+    # Create a dictionary to store the votes for each candidate
+    votes = CastedVotes.objects.values('candidate').annotate(vote_count=Count('candidate'))
+   
+     # Covert the Queryset to a list of dictionaries
+    votes = list(votes)
+
+    # Loop through the candidates and get the number of votes for each candidate
+    for candidate in candidates:
+        votes[candidate.full_name()] = candidate.castedvotes_set.count()
+    # Sort the votes in descending order
+    sorted_votes = dict(sorted(votes.items(), key=lambda item: item[1], reverse=True))
+    # Get the winner
+    winner = next(iter(sorted_votes))
+    # Get the number of votes for the winner
+    winning_votes = sorted_votes[winner]
+    # Get the total number of votes cast
+    total_votes = sum(votes.values())
+    context = {'votes': sorted_votes, 'winner': winner, 'winning_votes': winning_votes, 'total_votes': total_votes}
+    return render(request, 'voting/tally_votes.html', context)
