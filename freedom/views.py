@@ -1118,17 +1118,16 @@ def candidate_engvote_keypad(request, post_aspired_for):
                 # fetch the voter from the database
                 voter = Voters.objects.get(id=voter_id)
             except ObjectDoesNotExist:
-
                 return JsonResponse({'status': 'error','message': 'Voter does not exist'}, status=404)
             
             print(f"Voter ID: {voter.id}")
 
             # Vote for the candidate but the voter votes only once 
-            try:
-                # Check if the voter has already voted
-                existing_vote = CastedVotes.objects.get(voter_id=voter_id)
+            # Check if the voter has already voted
+            existing_vote = CastedVotes.objects.filter(voter_id=voter_id).first()
+            if existing_vote and existing_vote.candidate is not None:
                 return JsonResponse({'status': 'error', 'message': 'Voter has already cast a vote'}, status=400)
-            except ObjectDoesNotExist:
+            else:
                 # If the voter has not voted, cast the vote
                 CastedVotes.objects.create(candidate=candidate, voter_id=voter_id)
                 print(f"Successfully voted for {candidate.full_name()}!")
