@@ -45,6 +45,7 @@ from uuid import UUID
 # import Levenshtein
 
 
+
 # fuction for all voters
 def allvoters(request):
 
@@ -119,12 +120,12 @@ def sessions(request):
     return JsonResponse({'status': 'success', 'message': 'Session created successfully'})
 
 
-LANGUAGE_MAP = {
-    '1': 'select_post_keypad',  # English language
-    '2': 'select_post_lugkeypad',  # Luganda language
-    '3': 'select_post',  # English keypad
-    '4': 'select_post_lug',  # Luganda keypad
-}
+# LANGUAGE_MAP = {
+#     '1': 'select_post_keypad',  # English language
+#     '2': 'select_post_lugkeypad',  # Luganda language
+#     '3': 'select_post',  # English keypad
+#     '4': 'select_post_lug',  # Luganda keypad
+# }
 
 # sunbird call STT
 def sunbird(request, id):
@@ -203,7 +204,9 @@ def language(request):
     return render(request, 'verification/lang.html')
 
 def main(request):
-    request.session['language_key'] = '1'
+    request.session['language_key_1'] = '1'
+    request.session['language_key_2'] = '2'
+
     # request.session['language_map'] = language_map
     request.session.save()  # Explicitly save the session
     print("Session language_key set to:", request.session['language_key'])
@@ -235,33 +238,37 @@ def main(request):
             stored_characteristics1 = voter_characteristics1
 
             if comparison(scanned_xtics, stored_characteristics1) > 85:
-                print("sam")
+                # print("sam")
 
                 selected_language = request.session.get('selected_language')
 
-                        # Redirect to the corresponding page based on the selected language
+                 # Redirect to the corresponding page based on the selected language
                 if selected_language == 'English':
                     return redirect('select_post')
                 elif selected_language == 'njagala Luganda':
                     return redirect('select_post_lug')
-                
-                language_key = request.session.get('language_key')
-                print("The language key:", language_key)
-                
-                request.session['voter_id'] =str(voter[0])  # Assuming the voter's ID is the first element in the voter tuple
+                else:    
+                    language_key_1 = request.session.get('language_key_1')
+                    language_key_2 = request.session.get('language_key_2')
+                    if language_key_1 == '1':
+                        return redirect('select_post_keypad')
+                    elif language_key_2 == '2':
+                        return redirect('select_post_lugkeypad')
+                        # print("The language key:", language_key)
 
-                if language_key:
-                    # Map the language_key to a view function name
+                    request.session['voter_id'] =str(voter[0])  # Assuming the voter's ID is the first element in the voter tuple
+
+                # if language_key:
+                #     # Map the language_key to a view function name
     
-                    view_name = LANGUAGE_MAP.get(language_key, None)
-                    if view_name:
-                        print("The view name:", view_name)
-                        # Redirect to the specific page
-                        return redirect(reverse(view_name))
-                    else:
-                        return JsonResponse({'status': 'error', 'message': 'Invalid language key'}, status=400)
-                else:
-                    return JsonResponse({'status': 'error', 'message': 'Language key not found in session'}, status=400)
+                #     view_name = LANGUAGE_MAP.get(language_key, None)
+                #     if view_name:
+                #         print("The view name:", view_name)
+                #         # Redirect to the specific page
+                #         return redirect(reverse(view_name))
+                #     else:
+                #         return JsonResponse({'status': 'error', 'message': 'Invalid language key'}, status=400)
+                
 
         print("Fingerprint did not match.")
 
@@ -901,6 +908,7 @@ def language_keypad(request):
     if request.method == 'POST':
         key_pressed = request.POST.get('key_pressed')
         # Perform actions based on the key pressed
+        request.session.pop('selected_language', None)
         # For example, you can log the key pressed, trigger further instructions, etc.
         return JsonResponse({'status': 'success'})
 
