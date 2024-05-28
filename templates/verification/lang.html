@@ -164,6 +164,9 @@
               }else{
                 console.log("Stuff ain't working")
               }
+              audioPlayer.addEventListener('ended', function() {
+                window.location.href = "{% url 'verify' %}";
+            });
             })
             .catch(error => {
               console.error('Error:', error);

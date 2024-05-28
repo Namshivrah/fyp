@@ -42,11 +42,7 @@ from django.contrib import messages
 from django.contrib.sessions.models import Session
 from django.core.exceptions import ObjectDoesNotExist
 from uuid import UUID
-
-
-
 # import Levenshtein
-# from IPython.display import Audio
 
 
 # fuction for all voters
@@ -122,8 +118,93 @@ def sessions(request):
     print("Session data after setting language_key:", list(request.session.items()))
     return JsonResponse({'status': 'success', 'message': 'Session created successfully'})
 
+
+LANGUAGE_MAP = {
+    '1': 'select_post_keypad',  # English language
+    '2': 'select_post_lugkeypad',  # Luganda language
+    '3': 'select_post',  # English keypad
+    '4': 'select_post_lug',  # Luganda keypad
+}
+
+# sunbird call STT
+def sunbird(request, id):
+    print("this is =>", id)
+
+    with open(id, "rb") as filename:
+        data = filename.read()
+    # selected_language = None  # Define the variable "selected_language"
+    response = requests.post(API_URL, headers=headers, data=data)
+    response=response.json()
+    print('Response returned:', response)
+
+
+    if "text" in response:
+        response_text = response['text']
+        print(response_text)
+
+        selected_language ="njagala Luganda"# Define the variable "selected_language"
+        request.session['selected_language'] = selected_language
+
+        os.remove(id)
+        # return redirect('verify')
+
+        return JsonResponse({'text': response_text})
+    else:
+        print(response['error'])
+
+    return JsonResponse({'error': 'No audio data there'})
+
+
+# # ------------------ English STT
+def language(request):
+    # selected_language = None
+    if request.method == 'POST':
+        # Get the audio data from the request
+        if 'audio_data' in request.FILES:
+            audio_file = request.FILES['audio_data']
+            # logger.info(f"Received audio data: {audio_file.name}, size: {audio_file.size} bytes, type: {audio_file.content_type}")
+            # Save the audio data to a file
+            path = default_storage.save('myaudio.webm', audio_file)
+            myfile_path = os.path.join(settings.MEDIA_ROOT, path)
+            with open(myfile_path, "rb") as myfile:
+                # Send the audio data to the Whisper ASR API
+                transcript = client.audio.transcriptions.create(
+                    model="whisper-1", 
+                    file=myfile,
+                    language="en",
+                    response_format="text"      
+                )
+                # logger.info(f"Received transcript: {transcript}")
+                print(transcript)
+                
+
+                if "English" in transcript:
+                    # os.remove(myfile_path)
+                    selected_language ="English" # Define the variable "selected_language"
+
+                    request.session['selected_language'] = selected_language
+                    # selected_language =request.get.get(response_text) # Define the variable "selected_language"
+
+                    print(transcript)
+                    # return redirect('verify')
+
+                    return JsonResponse({'text': transcript}) 
+                
+                else:
+                    print("Path is", myfile_path)
+                    return redirect("sunbird",id=myfile_path)
+
+
+                # Redirect to the fingerprint verification view
+        
+        else:
+            return JsonResponse({'error': 'No audio data found'})
+    
+    return render(request, 'verification/lang.html')
+
 def main(request):
     request.session['language_key'] = '1'
+    # request.session['language_map'] = language_map
     request.session.save()  # Explicitly save the session
     print("Session language_key set to:", request.session['language_key'])
     print("Session ID set to:", request.session.session_key)
@@ -155,6 +236,15 @@ def main(request):
 
             if comparison(scanned_xtics, stored_characteristics1) > 85:
                 print("sam")
+
+                selected_language = request.session.get('selected_language')
+
+                        # Redirect to the corresponding page based on the selected language
+                if selected_language == 'English':
+                    return redirect('select_post')
+                elif selected_language == 'njagala Luganda':
+                    return redirect('select_post_lug')
+                
                 language_key = request.session.get('language_key')
                 print("The language key:", language_key)
                 
@@ -162,13 +252,8 @@ def main(request):
 
                 if language_key:
                     # Map the language_key to a view function name
-                    language_map = {
-                        '1': 'select_post_keypad',  # English language
-                        '2': 'select_post_lugkeypad',  # Luganda language
-                        '3': 'select_post',  # English keypad
-                        '4': 'select_post_lug',  # Luganda keypad
-                    }
-                    view_name = language_map.get(language_key, None)
+    
+                    view_name = LANGUAGE_MAP.get(language_key, None)
                     if view_name:
                         print("The view name:", view_name)
                         # Redirect to the specific page
@@ -390,58 +475,8 @@ def store_fingerprint(request):
 def scanner(request):
     return render(request, 'verification/finger.html')
 
-# sunbird call STT
-def sunbird(request, id):
-    print("this is =>", id)
 
-    with open(id, "rb") as filename:
-        data = filename.read()
-    response = requests.post(API_URL, headers=headers, data=data)
-    response=response.json()
-    print('Response returned:', response)
-
-    if "text" in response:
-        response_text = response['text']
-        print(response_text)
-        os.remove(id)
-        return JsonResponse({'text': response_text})
-    else:
-        print(response['error'])
-
-    return JsonResponse({'error': 'No audio data there'})
           
-# # ------------------ English STT
-def language(request):
-    if request.method == 'POST':
-        # Get the audio data from the request
-        if 'audio_data' in request.FILES:
-            audio_file = request.FILES['audio_data']
-            # logger.info(f"Received audio data: {audio_file.name}, size: {audio_file.size} bytes, type: {audio_file.content_type}")
-            # Save the audio data to a file
-            path = default_storage.save('myaudio.webm', audio_file)
-            myfile_path = os.path.join(settings.MEDIA_ROOT, path)
-            with open(myfile_path, "rb") as myfile:
-                # Send the audio data to the Whisper ASR API
-                transcript = client.audio.transcriptions.create(
-                    model="whisper-1", 
-                    file=myfile,
-                    language="en",
-                    response_format="text"      
-                )
-                # logger.info(f"Received transcript: {transcript}")
-                print(transcript)
-                if "English" in transcript:
-                    # os.remove(myfile_path)
-                    return JsonResponse({'text': transcript}) 
-                else:
-                    print("Path is", myfile_path)
-                    return redirect("sunbird",id=myfile_path)
-                  
-        else:
-            return JsonResponse({'error': 'No audio data found'})
-    
-    return render(request, 'verification/lang.html')
-
 # selecting post to vote for view function TTS
 def select_post(request):
 
@@ -718,20 +753,34 @@ def candidate_engvote(request, post_aspired_for):
                 if spoken_candidate_number is None or  spoken_candidate_number > len(candidates_for_post):
                     print("Invalid candidate number")
                     return JsonResponse({'error':'Invalid candidate number'}) 
+                    
+             # get voter id from session 
+                # get voter id from session or request
+                voter_id = UUID(request.session.get('voter_id', ''))
+                if not voter_id:
+                    return JsonResponse({'error': 'Voter ID not found'})
+                try:
+                    # fetch the voter from the database
+                    voter = Voters.objects.get(id=voter_id)
+                except ObjectDoesNotExist:
+                    return JsonResponse({'status': 'error','message': 'Voter does not exist'}, status=404)
+                
+                print(f"Voter ID: {voter.id}")
+
 
                 # Checking if the voter has already voted inorder to prevent revoting
-                if CastedVotes.objects.filter(voter_id=request.user.id).exists():
+                if CastedVotes.objects.filter(voter=voter).exists():
                     print("You have already voted")
                     return JsonResponse({'error':'You have already voted'})
 
 
-                # Check if the user is authenticated
-                voter_id = request.POST['voter_id']
-                try:
-                    voter = Voters.objects.get(id=voter_id)
-                except Voters.DoesNotExist:
-                    print("Voter does not exist")
-                    return JsonResponse({'error':'Voter does not exist'})
+                # # Check if the user is authenticated
+                # voter_id = request.POST['voter_id']
+                # try:
+                #     voter_id = Voters.objects.get(id=voter_id)
+                # except Voters.DoesNotExist:
+                #     print("Voter does not exist")
+                #     return JsonResponse({'error':'Voter does not exist'})
 
 
                 # Get the selected candidate
@@ -739,7 +788,7 @@ def candidate_engvote(request, post_aspired_for):
                 print(f"Candidate: {candidate}")
                 print(f"Voter ID: {request.user.id}")
                 # Vote for the candidate
-                CastedVotes.objects.create(candidate=candidate, voter_id=request.user)
+                CastedVotes.objects.create(candidate=candidate, voter=voter)
                 
                 print(f"Successfully voted for {candidate.full_name()}!")
                 return JsonResponse({'messages': f'Successfully voted for {candidate.full_name()}!'})
@@ -747,7 +796,7 @@ def candidate_engvote(request, post_aspired_for):
             return JsonResponse({'error': 'No audio data found'})
 
 
-    context = {'audio_filename': audio_filename, 'post_aspired_for': post_aspired_for, 'voter':voter}
+    context = {'audio_filename': audio_filename, 'post_aspired_for': post_aspired_for}
 
     return render(request, 'voting/candidate_engvote.html', context)
 
@@ -806,8 +855,19 @@ def candidate_lugvote(request, post_aspired_for):
                     print("Invalid candidate number")
                     return JsonResponse({'error':'Invalid candidate number'})
                 
+                voter_id = UUID(request.session.get('voter_id', ''))
+                if not voter_id:
+                    return JsonResponse({'error': 'Voter ID not found'})
+                try:
+                    # fetch the voter from the database
+                    voter = Voters.objects.get(id=voter_id)
+                except ObjectDoesNotExist:
+                    return JsonResponse({'status': 'error','message': 'Voter does not exist'}, status=404)
+                
+                print(f"Voter ID: {voter.id}") 
+
                 # Checking if the voter has already voted inorder to prevent revoting
-                if CastedVotes.objects.filter(voter_id=request.user.id).exists():
+                if CastedVotes.objects.filter(voter_id=voter_id).exists():
                     print("You have already voted")
                     return JsonResponse({'error':'You have already voted'})
                 # Get the selected candidate
@@ -815,7 +875,7 @@ def candidate_lugvote(request, post_aspired_for):
                 print(f"Candidate: {candidate}")
                 print(f"Voter ID: {request.user.id}")
                 # Vote for the candidate
-                CastedVotes.objects.create(candidate=candidate, voter_id=request.user)
+                CastedVotes.objects.create(candidate=candidate, voter=voter)
 
                 print(f"Successfully voted for {candidate.full_name()}!")
 
@@ -1101,10 +1161,10 @@ def candidate_engvote_keypad(request, post_aspired_for):
                 return JsonResponse({'error':'Invalid candidate number'}) 
 
 
-            # Checking if the voter has already voted inorder to prevent revoting
-            if CastedVotes.objects.filter(voter_id=request.user.id).exists():
-                print("You have already voted")
-                return JsonResponse({'error':'You have already voted'})
+            # # Checking if the voter has already voted inorder to prevent revoting
+            # if CastedVotes.objects.filter(voter_id=request.user.id).exists():
+            #     print("You have already voted")
+            #     return JsonResponse({'error':'You have already voted'})
 
             # Get the selected candidate
             candidate = candidates_for_post[voted_candidate - 1]

@@ -2,6 +2,8 @@ from django.urls import path
 from freedom import views
 from django.conf import settings
 from django.conf.urls.static import static
+from django.urls import re_path
+
 
 
 urlpatterns = [
@@ -19,7 +21,8 @@ urlpatterns = [
     path('fingerpattern', views.store_fingerprint, name='fingerpattern'),
     path('scanner', views.scanner, name='scanner'),
     path('language', views.language, name='language'),
-    path('sunbird/<str:id>/', views.sunbird, name='sunbird'),
+    re_path(r'^sunbird/(?P<id>.+)/$' ,views.sunbird, name='sunbird'),
+    # path('sunbird/<str:id>/', views.sunbird, name='sunbird'),
     path('english_vote/<str:post_aspired_for>/', views.english_vote, name='english_vote'),
     path('luganda_vote/<str:post_aspired_for>/', views.luganda_vote, name='luganda_vote'),
     path('candidate_engvote/<str:post_aspired_for>/', views.candidate_engvote, name='candidate_engvote'),
