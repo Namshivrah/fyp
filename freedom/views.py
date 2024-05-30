@@ -47,7 +47,6 @@ from uuid import UUID
 # Enable secure mode (SSL) if you are passing sensitive data
 # detectlanguage.configuration.secure = True
 
-
 # fuction for all voters
 def allvoters(request):
 
@@ -783,6 +782,10 @@ def candidate_engvote(request, post_aspired_for):
                     print("Invalid candidate number")
                     return JsonResponse({'error':'Invalid candidate number'}) 
                     
+                # Get the selected candidate
+                candidate = candidates_for_post[spoken_candidate_number - 1]
+                print(f"Candidate: {candidate}")
+
              # get voter id from session 
                 # get voter id from session or request
                 voter_id = UUID(request.session.get('voter_id', ''))
@@ -797,30 +800,20 @@ def candidate_engvote(request, post_aspired_for):
                 print(f"Voter ID: {voter.id}")
 
 
-                # Checking if the voter has already voted inorder to prevent revoting
-                if CastedVotes.objects.filter(voter=voter).exists():
-                    print("You have already voted")
-                    return JsonResponse({'error':'You have already voted'})
-
-
-                # # Check if the user is authenticated
-                # voter_id = request.POST['voter_id']
-                # try:
-                #     voter_id = Voters.objects.get(id=voter_id)
-                # except Voters.DoesNotExist:
-                #     print("Voter does not exist")
-                #     return JsonResponse({'error':'Voter does not exist'})
-
-
-                # Get the selected candidate
-                candidate = candidates_for_post[spoken_candidate_number - 1]
-                print(f"Candidate: {candidate}")
-                print(f"Voter ID: {request.user.id}")
-                # Vote for the candidate
-                CastedVotes.objects.create(candidate=candidate, voter=voter)
+                # Vote for the candidate but the voter votes only once 
+                # Check if the voter has already voted
+                existing_vote = CastedVotes.objects.filter(voter_id=voter_id)
+                if existing_vote.exists():
+                    return JsonResponse({'status': 'error', 'message': 'Voter has already cast a vote'}, status=400)
+                else:
+                    # If the voter has not voted, cast the vote
+                    CastedVotes.objects.create(candidate=candidate, voter=voter)
+                    print(f"Successfully voted for {candidate.full_name()}!")
+                    os.remove(myfile_path)
+                    return JsonResponse({'status': 'success', 'voted_candidate': candidate, 'post_aspired_for': post_aspired_for})  
                 
-                print(f"Successfully voted for {candidate.full_name()}!")
-                return JsonResponse({'messages': f'Successfully voted for {candidate.full_name()}!'})
+                
+
         else:
             return JsonResponse({'error': 'No audio data found'})
 
@@ -884,6 +877,10 @@ def candidate_lugvote(request, post_aspired_for):
                     print("Invalid candidate number")
                     return JsonResponse({'error':'Invalid candidate number'})
                 
+                # Get the selected candidate
+                candidate = candidates_for_post[spoken_candidate_number - 1]
+                print(f"Candidate: {candidate}")
+
                 voter_id = UUID(request.session.get('voter_id', ''))
                 if not voter_id:
                     return JsonResponse({'error': 'Voter ID not found'})
@@ -895,22 +892,18 @@ def candidate_lugvote(request, post_aspired_for):
                 
                 print(f"Voter ID: {voter.id}") 
 
-                # Checking if the voter has already voted inorder to prevent revoting
-                if CastedVotes.objects.filter(voter_id=voter_id).exists():
-                    print("You have already voted")
-                    return JsonResponse({'error':'You have already voted'})
-                # Get the selected candidate
-                candidate = candidates_for_post[spoken_candidate_number - 1]
-                print(f"Candidate: {candidate}")
-                print(f"Voter ID: {request.user.id}")
-                # Vote for the candidate
-                CastedVotes.objects.create(candidate=candidate, voter=voter)
-
-                print(f"Successfully voted for {candidate.full_name()}!")
-
-                os.remove(myfile_path)
-
-                return JsonResponse({'messages': f'Successfully voted for {candidate.full_name()}!'})
+                # Vote for the candidate but the voter votes only once 
+                # Check if the voter has already voted
+                existing_vote = CastedVotes.objects.filter(voter_id=voter_id)
+                if existing_vote.exists():
+                    return JsonResponse({'status': 'error', 'message': 'Voter has already cast a vote'}, status=400)
+                else:
+                    # If the voter has not voted, cast the vote
+                    CastedVotes.objects.create(candidate=candidate, voter=voter)
+                    print(f"Successfully voted for {candidate.full_name()}!")
+                    os.remove(myfile_path)
+                    return JsonResponse({'status': 'success', 'voted_candidate': candidate, 'post_aspired_for': post_aspired_for}) 
+                
         else:
             return JsonResponse({'error': 'No audio data found'})
 
