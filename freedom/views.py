@@ -47,6 +47,7 @@ from uuid import UUID
 # Enable secure mode (SSL) if you are passing sensitive data
 # detectlanguage.configuration.secure = True
 
+
 # fuction for all voters
 def allvoters(request):
 
