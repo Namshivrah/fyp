@@ -18,8 +18,13 @@ admin.site.register(Polling_Station, PollingStationAdmin)
 
 # Registering the Voters model to the admin panel
 class VotersAdmin(admin.ModelAdmin):
-
     list_display = ['id', 'first_name', 'last_name', 'gender', 'voter_type', 'Polling_station', 'fingerprint_xtics']
+
+    def delete_model(self, request, obj):
+        # Clear the voter_id in the session
+        if 'voter_id' in request.session and str(obj.id) == request.session['voter_id']:
+            del request.session['voter_id']
+        super().delete_model(request, obj)
 
 admin.site.register(Voters, VotersAdmin)
 

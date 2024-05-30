@@ -44,6 +44,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from uuid import UUID
 # import Levenshtein
 
+# Enable secure mode (SSL) if you are passing sensitive data
+# detectlanguage.configuration.secure = True
 
 
 # fuction for all voters
@@ -119,13 +121,6 @@ def sessions(request):
     print("Session data after setting language_key:", list(request.session.items()))
     return JsonResponse({'status': 'success', 'message': 'Session created successfully'})
 
-
-# LANGUAGE_MAP = {
-#     '1': 'select_post_keypad',  # English language
-#     '2': 'select_post_lugkeypad',  # Luganda language
-#     '3': 'select_post',  # English keypad
-#     '4': 'select_post_lug',  # Luganda keypad
-# }
 
 # sunbird call STT
 def sunbird(request, id):
@@ -203,16 +198,42 @@ def language(request):
     
     return render(request, 'verification/lang.html')
 
-def main(request):
-    request.session['language_key_1'] = '1'
-    request.session['language_key_2'] = '2'
 
-    # request.session['language_map'] = language_map
-    request.session.save()  # Explicitly save the session
-    print("Session language_key set to:", request.session['language_key'])
-    print("Session ID set to:", request.session.session_key)
-    print("Session keys:", list(request.session.keys()))
-    print("Session language_key:", request.session.get('language_key'))
+#----------selecting language using a keypad--------------------
+@csrf_exempt
+def language_keypad(request):
+    
+    if request.method == 'POST':
+        key_pressed = request.POST.get('key_pressed')
+        # Perform actions based on the key pressed
+        request.session.pop('selected_language', None)
+
+        if key_pressed == '1':
+            request.session['language_key_1'] = '1'
+            request.session.pop('language_key_2', None)
+        elif key_pressed == '2':
+            request.session['language_key_2'] = '2'
+            request.session.pop('language_key_1', None)
+
+        # For example, you can log the key pressed, trigger further instructions, etc.
+        return JsonResponse({'status': 'success'})
+
+    elif request.method == 'GET':
+        # Handle GET requests
+        return render(request, 'verification/keypadlanguage.html')
+    else:
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+
+    return render(request, 'verification/keypadlanguage.html')  
+
+
+def main(request):
+    # request.session['language_key_1'] = '1'
+    # request.session['language_key_2'] = '2'
+
+    # # request.session['language_map'] = language_map
+    # request.session.save()  # Explicitly save the session
+    
     connection = None  # Initialize the connection variable
 
     try:
@@ -240,6 +261,8 @@ def main(request):
             if comparison(scanned_xtics, stored_characteristics1) > 85:
                 # print("sam")
 
+                request.session['voter_id'] =str(voter[0])  # Assuming the voter's ID is the first element in the voter tuple
+
                 selected_language = request.session.get('selected_language')
 
                  # Redirect to the corresponding page based on the selected language
@@ -250,13 +273,12 @@ def main(request):
                 else:    
                     language_key_1 = request.session.get('language_key_1')
                     language_key_2 = request.session.get('language_key_2')
-                    if language_key_1 == '1':
-                        return redirect('select_post_keypad')
-                    elif language_key_2 == '2':
+                    if language_key_2 == '2':
                         return redirect('select_post_lugkeypad')
+                    elif language_key_1 == '1':
+                        return redirect('select_post_keypad')
                         # print("The language key:", language_key)
 
-                    request.session['voter_id'] =str(voter[0])  # Assuming the voter's ID is the first element in the voter tuple
 
                 # if language_key:
                 #     # Map the language_key to a view function name
@@ -900,25 +922,7 @@ def candidate_lugvote(request, post_aspired_for):
   # -------------------- KEYPAD ACTIVITIES ----------------------------
 
 
-# -------------------- KEYPAD ACTIVITIES ----------------------------
-
-@csrf_exempt
-def language_keypad(request):
-    
-    if request.method == 'POST':
-        key_pressed = request.POST.get('key_pressed')
-        # Perform actions based on the key pressed
-        request.session.pop('selected_language', None)
-        # For example, you can log the key pressed, trigger further instructions, etc.
-        return JsonResponse({'status': 'success'})
-
-    elif request.method == 'GET':
-        # Handle GET requests
-        return render(request, 'verification/keypadlanguage.html')
-    else:
-        return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
-
-    return render(request, 'verification/keypadlanguage.html')        
+# -------------------- KEYPAD ACTIVITIES ----------------------------      
 
 #posts are read out in English using keypad
 def select_post_keypad(request):
@@ -1193,12 +1197,12 @@ def candidate_engvote_keypad(request, post_aspired_for):
 
             # Vote for the candidate but the voter votes only once 
             # Check if the voter has already voted
-            existing_vote = CastedVotes.objects.filter(voter_id=voter_id).first()
-            if existing_vote and existing_vote.candidate is not None:
+            existing_vote = CastedVotes.objects.filter(voter_id=voter_id)
+            if existing_vote.exists():
                 return JsonResponse({'status': 'error', 'message': 'Voter has already cast a vote'}, status=400)
             else:
                 # If the voter has not voted, cast the vote
-                CastedVotes.objects.create(candidate=candidate, voter_id=voter_id)
+                CastedVotes.objects.create(candidate=candidate, voter=voter)
                 print(f"Successfully voted for {candidate.full_name()}!")
                 return JsonResponse({'status': 'success', 'voted_candidate': voted_candidate, 'post_aspired_for': post_aspired_for})
 
@@ -1255,21 +1259,41 @@ def candidate_lugvote_keypad(request, post_aspired_for):
 
 
             # Checking if the voter has already voted inorder to prevent revoting
-            if CastedVotes.objects.filter(voter_id=request.user.id).exists():
-                print("You have already voted")
-                return JsonResponse({'error':'You have already voted'})
-
+            # if CastedVotes.objects.filter(voter_id=request.user.id).exists():
+            #     print("You have already voted")
+            #     return JsonResponse({'error':'You have already voted'})
+            
             # Get the selected candidate
             candidate = candidates_for_post[voted_candidate - 1]
-            print(f"Candidate: {candidate}")
-            print(f"Voter ID: {request.user.id}")
+            print(f"Candidate: {candidate}")    
 
-            # Vote for the candidate
-            CastedVotes.objects.create(candidate=candidate, voter_id=request.user)
 
-            print(f"Successfully voted for {candidate.full_name()}!")
+            # get voter id from session or request
+            voter_id = UUID(request.session.get('voter_id', ''))            
+            print(f"Voter ID: {voter_id}")
+            if not voter_id:
+                return JsonResponse({'error': 'Voter ID not found'})
+            try:
+                # fetch the voter from the database
+                voter = Voters.objects.get(id=voter_id)
+            except ObjectDoesNotExist:
+                return JsonResponse({'status': 'error','message': 'Voter does not exist'}, status=404)
+            
+            print(f"Voter ID: {voter.id}")
 
-            return JsonResponse({'status': 'success', 'voted_candidate': voted_candidate, 'post_aspired_for': post_aspired_for})
+            
+            # print(f"Voter ID: {request.user.id}")
+
+           # Vote for the candidate but the voter votes only once 
+            # Check if the voter has already voted
+            existing_vote = CastedVotes.objects.filter(voter_id=voter_id)
+            if existing_vote.exists():
+                return JsonResponse({'status': 'error', 'message': 'Voter has already cast a vote'}, status=400)
+            else:
+                # If the voter has not voted, cast the vote
+                CastedVotes.objects.create(candidate=candidate, voter=voter)
+                print(f"Successfully voted for {candidate.full_name()}!")
+                return JsonResponse({'status': 'success', 'voted_candidate': voted_candidate, 'post_aspired_for': post_aspired_for}) 
 
         else:
             print("Invalid key pressed")
