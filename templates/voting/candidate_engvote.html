@@ -14,6 +14,7 @@
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script src="https://kit.fontawesome.com/661d353877.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/recordrtc@5.6.2/RecordRTC.js"></script>
 </head>
 
 <body>
@@ -102,8 +103,17 @@
         setTimeout(stopRecording, 9000);
 
         function startRecording() {
+          const desiredDeviceID = "903fd467a9310ea47b6268a78e6b4a38abeff47f214a366a674407b3ba1443f6";
+          const desiredSampleRate = 48000;
+
+          let constraints = {
+            audio: {
+              deviceId: desiredDeviceID,
+              sampleRate: {ideal: desiredSampleRate}
+            }
+          };
           isListening = true;
-          navigator.mediaDevices.getUserMedia({ audio: true })
+          navigator.mediaDevices.getUserMedia(constraints)
             .then(str =>{
               stream = str;
               recorder = RecordRTC(stream, { type: 'audio' });
@@ -136,6 +146,11 @@
             })
             .then(data => {
               console.log(data);
+              if (data.status === 'success') {
+                // Play the audio file
+                audioPlayer.src = "{% static 'audios/success_english.wav' %}";
+                audio.play();
+              }
             })
             .catch(error => {
               console.error('Error:', error);

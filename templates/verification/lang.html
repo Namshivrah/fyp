@@ -13,6 +13,8 @@
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script src="https://kit.fontawesome.com/661d353877.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/recordrtc@5.6.2/RecordRTC.js"></script>
+{% comment %} <script src="https://cdn.WebRTC-Experiment.com/RecordRTC.js"></script> <!-- Ensure this line is included --> {% endcomment %}
 </head>
 
 <body>
@@ -93,19 +95,19 @@
         setTimeout(function() {
           audioPlayer.src = "{% static "audios/engred.wav" %}";
           audioPlayer.play();
-        }, 6000);
+        }, 9000);
       
         // Play the "lug.wav" file after 20 seconds
         setTimeout(function() {
           audioPlayer.src = "{% static "audios/lugred.wav" %}";
           audioPlayer.play();
-        }, 11000);
+        }, 13000);
       
         // Start recording after 3 seconds
-        setTimeout(startRecording, 17000);
+        setTimeout(startRecording, 18000);
 
         // Stop recording after 10 seconds
-        setTimeout(stopRecording, 21000);
+        setTimeout(stopRecording, 22000);
 
         function startRecording() {
           const desiredDeviceID = "903fd467a9310ea47b6268a78e6b4a38abeff47f214a366a674407b3ba1443f6";

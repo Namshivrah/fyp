@@ -2,6 +2,7 @@ from sqlite3 import Cursor
 import psycopg2
 import requests
 import base64
+from word2number import w2n
 from django.conf import settings
 import os
 from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
@@ -44,6 +45,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from uuid import UUID
 # import Levenshtein
 
+# Enable secure mode (SSL) if you are passing sensitive data
+# detectlanguage.configuration.secure = True
 # Enable secure mode (SSL) if you are passing sensitive data
 # detectlanguage.configuration.secure = True
 
@@ -512,8 +515,8 @@ def select_post(request):
     posts = Candidates.objects.values_list('post_aspired_for', flat=True).distinct()
     # Creating the text Input
     the_text= f"Available Posts to Vote For: "
-    for post in posts:
-        the_text += f"{post}. "
+    for i, post in enumerate(posts, start=1):
+        the_text += f"{i}: {post},"
 
     # Output format
     # audio_filename =   # You can choose a desired filename
@@ -540,26 +543,39 @@ def select_post(request):
     return render(request, 'voting/select_post.html',context)
 
 # Valaibale posts luganda version TTS
+numbers_to_luganda = {
+    1: "emu",
+    2: "bbiri",
+    3: "ssatu",
+}
 def select_post_lug(request):
 
     posts = Candidates.objects.values_list('post_aspired_for', flat=True).distinct()
     # Creating the text Input
-    the_text= f"Ebiffo eby'okuloondebwa: "
-    for post in posts:
-        the_text += f"{post}. "
+    the_text= f"Ebiffo eby'okuloondebwa:  "
+    for i, post in enumerate(posts, start=1):
+        # look up the Luganda equivalent for the number
+        number_in_luganda = numbers_to_luganda.get(i, str(i))
+        the_text += f"{number_in_luganda}:  {post}, "
 
-    # Creating Audio Response
-    response =  requests.post(VOTE_API_URL, headers=headers, json={"inputs": the_text})
-
-    # Output format
-    # audio_filename =   # You can choose a desired filename
-    audio_url = os.path.join(settings.MEDIA_ROOT, 'output_audio.webm')
-    
-    print(type(audio_url))
-    print(os.path.exists(audio_url))
-    with open(audio_url, 'wb') as f:
-        content = response.content       
-        f.write(content)
+    try:
+        # Creating Audio Response
+        response =  requests.post(VOTE_API_URL, headers=headers, json={"inputs": the_text})
+        print(response)
+        # Output format
+        # audio_filename =   # You can choose a desired filename
+        audio_url = os.path.join(settings.MEDIA_ROOT, 'output_audio.webm')
+        
+        print(type(audio_url))
+        print(os.path.exists(audio_url))
+        with open(audio_url, 'wb') as f:
+            content = response.content       
+            f.write(content)
+    except Exception as e:
+        print(f"Error: {e}")
+    # Check and print the size of the audio file
+    file_size = os.path.getsize(audio_url)
+    print(f"Size of the audio file: {file_size} bytes")
    
     lug_url = reverse('postlug_choice')  # Replace 'english_vote' with the name of your view
 
@@ -658,8 +674,8 @@ def english_vote(request,post_aspired_for):
     candidates = Candidates.objects.filter(post_aspired_for=post_aspired_for).order_by('?')
     # Creating the text Input
     the_text= f"Candidates for {post_aspired_for}. "
-    for candidate in candidates:
-        the_text += f"{candidate.full_name()}. "
+    for i, candidate in enumerate(candidates, start=1):
+        the_text += f"{i}: {candidate.full_name()}, "
 
     # Output format
     # audio_filename =   # You can choose a desired filename
@@ -764,8 +780,16 @@ def candidate_engvote(request, post_aspired_for):
                 print(f"Transcript: {transcript}")
 
                 # Convert the transcript to an integer
-                spoken_candidate_number = spoken_numbers.get(transcript.lower())
+                # spoken_candidate_number = spoken_numbers.get(transcript.lower())
+                # print(spoken_candidate_number)# Try to convert the transcript to an integer directly
+                try:
+                    spoken_candidate_number = int(transcript)
+                except ValueError:
+                    # If that fails, try to convert it using the spoken_numbers dictionary
+                    spoken_candidate_number = spoken_numbers.get(transcript.lower())
+
                 print(spoken_candidate_number)
+
 
                 # Get the list of candidates for the specific post aspired for
                 print(f"Post aspired for: {post_aspired_for}")
@@ -805,15 +829,13 @@ def candidate_engvote(request, post_aspired_for):
                 # Check if the voter has already voted
                 existing_vote = CastedVotes.objects.filter(voter_id=voter_id)
                 if existing_vote.exists():
-                    return JsonResponse({'status': 'error', 'message': 'Voter has already cast a vote'}, status=400)
+                    return JsonResponse({'status': 'error', 'message': 'Voter has already cast a vote'})
                 else:
                     # If the voter has not voted, cast the vote
                     CastedVotes.objects.create(candidate=candidate, voter=voter)
                     print(f"Successfully voted for {candidate.full_name()}!")
                     os.remove(myfile_path)
-                    return JsonResponse({'status': 'success', 'voted_candidate': candidate, 'post_aspired_for': post_aspired_for})  
-                
-                
+                    return JsonResponse({'status': 'success', 'post_aspired_for': post_aspired_for})  
 
         else:
             return JsonResponse({'error': 'No audio data found'})
@@ -837,11 +859,12 @@ def candidate_lugvote(request, post_aspired_for):
                 data = myfile.read()
                 # Send the audio data to the Whisper ASR API
                 spoken_numbers = {
-                    "njagala nnamba emu": 1,
-                    "njagala nnamba bbiri": 2,
-                    "njagala nnamba ssatu": 3,
-                    "njagala nnamba nnya": 4,
+                    "emu": 1,
+                    "bbiri": 2,
+                    "ssatu": 3,
+                    "nnya": 4,
                 }
+                
                 # Get the transcipt from the Whisper ASR API
                 response = requests.post(API_URL, headers=headers, data=data)
                 response=response.json()
@@ -851,17 +874,27 @@ def candidate_lugvote(request, post_aspired_for):
                 spoken_candidate_number = None
 
                 if "text" in response:
-                    response_text = response['text']
-                    transcript = response_text.strip().lower()
+                    transcript = response['text'].strip().lower()
+                    # transcript = response_text.strip().lower()
                     print(transcript)
-                    # To remove any spaces  
-                    transcript = transcript.strip().translate(str.maketrans('', '', string.punctuation))
-                    print(f"Transcript: {transcript}")
 
-                    # Convert the transcript to an integer
-                    spoken_candidate_number = spoken_numbers.get(transcript.lower())
-                    print(spoken_candidate_number)
+                    # Assume `transcript` is the variable that holds the spoken statement
+                    for word, number in spoken_numbers.items():
+                        if word in transcript:
+                            spoken_candidate_number = number
+                            # `number` now holds the number corresponding to the spoken word
+                            break
 
+
+                    # # To remove any spaces  
+                    # transcript = transcript.strip().translate(str.maketrans('', '', string.punctuation))
+                    # print(f"Transcript: {transcript}")
+
+                    # # Convert the transcript to an integer
+                    # spoken_candidate_number = spoken_numbers.get(transcript.lower())
+                    # print(spoken_candidate_number)
+                
+                
                 # Get the list of candidates for the specific post aspired for
                 print(f"Post aspired for: {post_aspired_for}")
                 candidates_for_post = Candidates.objects.filter(post_aspired_for=post_aspired_for)
@@ -897,16 +930,17 @@ def candidate_lugvote(request, post_aspired_for):
                 # Check if the voter has already voted
                 existing_vote = CastedVotes.objects.filter(voter_id=voter_id)
                 if existing_vote.exists():
-                    return JsonResponse({'status': 'error', 'message': 'Voter has already cast a vote'}, status=400)
+                    return JsonResponse({'status': 'error', 'message': 'Voter has already cast a vote'})
                 else:
                     # If the voter has not voted, cast the vote
                     CastedVotes.objects.create(candidate=candidate, voter=voter)
                     print(f"Successfully voted for {candidate.full_name()}!")
                     os.remove(myfile_path)
-                    return JsonResponse({'status': 'success', 'voted_candidate': candidate, 'post_aspired_for': post_aspired_for}) 
-                
+                    return JsonResponse({'status': 'success', 'post_aspired_for': post_aspired_for})  
+
         else:
             return JsonResponse({'error': 'No audio data found'})
+    
 
     context = {'audio_filename': audio_filename, 'post_aspired_for': post_aspired_for}
     
@@ -1099,19 +1133,21 @@ def luganda_vote_keypad(request, post_aspired_for):
         number_in_luganda = numbers_to_luganda.get(i, str(i))
         the_text += f"{number_in_luganda}:  {candidate.full_name()}, "
     
-    # Creating Audio Response
-    response = requests.post(VOTE_API_URL, headers=headers, json={"inputs": the_text})
+    try:
+        # Creating Audio Response
+        response = requests.post(VOTE_API_URL, headers=headers, json={"inputs": the_text})
 
-    # Choosing the output format
-    audio_url = os.path.join(settings.MEDIA_ROOT, 'output_audio.webm')
-    
-    print(type(audio_url))
-    print(os.path.exists(audio_url))
+        # Choosing the output format
+        audio_url = os.path.join(settings.MEDIA_ROOT, 'output_audio.webm')
+        
+        print(type(audio_url))
+        print(os.path.exists(audio_url))
 
-    with open(audio_url, "wb") as filename:
-        content = response.content       
-        filename.write(content)
-
+        with open(audio_url, "wb") as filename:
+            content = response.content       
+            filename.write(content)
+    except Exception as e:
+        print(f"Error: {e}")
         # if response.status_code == 200:
         #     filename.write(response.content)
         #     print('Audio file saved:')
@@ -1307,11 +1343,6 @@ def candidate_lugvote_keypad(request, post_aspired_for):
 
 # ------------------TALLYING ACTIVITIES ----------------------------
 def tally_votes(request):
-     # Query the database for all votes and count the number of votes for each candidate
-    # vote_counts = CastedVotes.objects.values('candidate').annotate(vote_count=Count('candidate'))
-
-    # # Covert the Queryset to a list of dictionaries
-    # vote_counts = list(vote_counts)
 
     # Get the list of candidates
     candidates = Candidates.objects.all()

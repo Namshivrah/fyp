@@ -24,7 +24,9 @@ class VotersAdmin(admin.ModelAdmin):
         # Clear the voter_id in the session
         if 'voter_id' in request.session and str(obj.id) == request.session['voter_id']:
             del request.session['voter_id']
+            request.session.save()
         super().delete_model(request, obj)
+
 
 admin.site.register(Voters, VotersAdmin)
 
